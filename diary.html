@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>나의 일기장</title>
+<meta name="theme-color" content="#f06292">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="나의 일기장">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: linear-gradient(145deg, #fce4ec 0%, #f3e5f5 50%, #ede7f6 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 20px 12px 60px;
+}
+
+.app {
+  width: 100%;
+  max-width: 480px;
+}
+
+.screen { display: none !important; }
+.screen.active { display: block !important; }
+
+/* ─── CARD ─── */
+.card {
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 8px 40px rgba(194,24,91,0.13);
+  overflow: hidden;
+}
+
+/* ─── CALENDAR ─── */
+.cal-header {
+  background: linear-gradient(135deg, #f06292, #ba68c8);
+  padding: 28px 20px 20px;
+  text-align: center;
+  color: #fff;
+}
+.cal-title {
+  font-family: 'Noto Serif KR', serif;
+  font-weight: 300;
+  font-size: 1.1rem;
+  letter-spacing: 3px;
+  margin-bottom: 18px;
+  opacity: 0.95;
+}
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+.nav-btn {
+  background: rgba(255,255,255,0.28);
+  border: none;
+  color: #fff;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.4rem;
+  line-height: 1;
+  transition: background 0.2s;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.5); }
+.month-label {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: 'Noto Serif KR', serif;
+  min-width: 140px;
+  text-align: center;
+}
+.cal-grid { padding: 14px 12px 10px; }
+.dow-row {
+  display: grid;
+  grid-template-columns: repeat(7,1fr);
+  margin-bottom: 6px;
+}
+.dow {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #bdbdbd;
+  padding: 5px 0;
+}
+.dow.sun { color: #f06292; }
+.dow.sat { color: #9575cd; }
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7,1fr);
+  gap: 4px;
+}
+.day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.88rem;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.day:hover { background: #fce4ec; }
+.day.other-month { color: #d8d8d8; pointer-events: none; }
+.day.sun-col { color: #f06292; }
+.day.sat-col { color: #9575cd; }
+.day.today {
+  background: linear-gradient(135deg, #f06292, #ba68c8) !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+.entry-dot {
+  position: absolute;
+  bottom: 3px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #f06292;
+  pointer-events: none;
+}
+.day.today .entry-dot { background: rgba(255,255,255,0.8); }
+
+.cal-footer {
+  padding: 14px 20px 22px;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid #fce4ec;
+}
+.today-btn {
+  background: linear-gradient(135deg, #f06292, #ba68c8);
+  color: #fff;
+  border: none;
+  padding: 12px 36px;
+  border-radius: 24px;
+  font-size: 0.9rem;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(240,98,146,0.38);
+  transition: all 0.2s;
+}
+.today-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(240,98,146,0.48); }
+
+/* ─── DIARY ─── */
+.diary-header {
+  background: linear-gradient(135deg, #f06292, #ba68c8);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.back-btn {
+  background: rgba(255,255,255,0.28);
+  border: none;
+  color: #fff;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.3rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.48); }
+.hdr-title {
+  color: #fff;
+  font-family: 'Noto Serif KR', serif;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+.save-btn {
+  margin-left: auto;
+  background: rgba(255,255,255,0.28);
+  border: none;
+  color: #fff;
+  padding: 7px 18px;
+  border-radius: 18px;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.save-btn:hover { background: rgba(255,255,255,0.48); }
+
+.diary-body { padding: 20px 18px 30px; }
+
+/* Date + Weather */
+.row-dw {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1.5px solid #fce4ec;
+  margin-bottom: 18px;
+}
+.diary-date-txt {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 1.02rem;
+  color: #5d4037;
+}
+.weather-row { display: flex; gap: 6px; }
+.w-btn {
+  background: none;
+  border: 2px solid #e0e0e0;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.05rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s;
+}
+.w-btn.active { border-color: #f06292; background: #fce4ec; }
+
+/* Section */
+.sec { margin-bottom: 18px; }
+.sec-label {
+  font-size: 0.72rem;
+  color: #c0a0b0;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+
+/* Mood */
+.mood-row { display: flex; gap: 6px; }
+.m-btn {
+  flex: 1;
+  background: none;
+  border: 2px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 8px 2px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.18s;
+}
+.m-btn .emo { font-size: 1.2rem; }
+.m-btn .mlbl { font-size: 0.62rem; color: #9e9e9e; }
+.m-btn.active { border-color: #f06292; background: #fce4ec; }
+.m-btn.active .mlbl { color: #e91e63; }
+
+/* Chips */
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 24px; }
+.chip {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 16px; font-size: 0.78rem;
+}
+.chip.htag { background: #f3e5f5; color: #7b1fa2; }
+.chip.med  { background: #fce4ec; color: #c2185b; }
+.rm { cursor: pointer; font-size: 0.8rem; opacity: 0.6; }
+.rm:hover { opacity: 1; }
+
+.input-row { display: flex; gap: 8px; }
+.t-input {
+  flex: 1;
+  border: 1.5px solid #e8e0e8;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-family: 'Noto Sans KR', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #fafafa;
+}
+.t-input:focus { border-color: #f06292; background: #fff; }
+.add-btn {
+  background: linear-gradient(135deg, #f06292, #ba68c8);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: 'Noto Sans KR', sans-serif;
+  white-space: nowrap;
+}
+.drug-link {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 0.72rem;
+  color: #bbb;
+  text-decoration: none;
+}
+.drug-link:hover { color: #f06292; }
+
+.divider { height: 1px; background: #fce4ec; margin: 18px 0; }
+
+/* Headache scale */
+.scale-row { display: flex; gap: 3px; }
+.sc-cell {
+  flex: 1;
+  height: 30px;
+  border-radius: 6px;
+  background: #f5f5f5;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.62rem;
+  color: #ccc;
+  transition: all 0.15s;
+  user-select: none;
+}
+.sc-cell:hover { background: #fce4ec; color: #f06292; }
+.sc-cell.lit { background: linear-gradient(135deg, #f06292, #ba68c8); color: #fff; }
+
+/* Time bar */
+.time-bar {
+  display: flex; gap: 1px;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.t-slot {
+  flex: 1;
+  background: #f0f0f0;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.t-slot:hover { background: #fce4ec; }
+.t-slot.on { background: linear-gradient(to bottom, #f48fb1, #ce93d8); }
+.time-ticks {
+  display: flex; justify-content: space-between;
+  margin-top: 4px; padding: 0 2px;
+}
+.t-tick { font-size: 0.6rem; color: #ccc; }
+
+/* Diary textarea */
+.diary-wrap {
+  border: 2px solid #f06292;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.diary-ta {
+  width: 100%;
+  border: none; outline: none;
+  padding: 14px 16px;
+  font-family: 'Noto Serif KR', serif;
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: #5d4037;
+  resize: none;
+  min-height: 150px;
+  max-height: 150px;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+  background: transparent;
+}
+.diary-ta.expanded { max-height: 600px; overflow-y: auto; }
+.expand-btn {
+  width: 100%;
+  background: #fce4ec;
+  border: none;
+  padding: 6px;
+  font-size: 0.72rem;
+  color: #f06292;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.expand-btn:hover { background: #f8bbd0; }
+
+/* One-liner */
+.one-liner {
+  width: 100%;
+  border: 1.5px solid #e8e0e8;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-family: 'Noto Serif KR', serif;
+  font-size: 0.9rem;
+  color: #5d4037;
+  outline: none;
+  background: #fafafa;
+  transition: border-color 0.2s;
+}
+.one-liner:focus { border-color: #f06292; background: #fff; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: rgba(93,64,55,0.88);
+  color: #fff;
+  padding: 11px 26px;
+  border-radius: 24px;
+  font-size: 0.85rem;
+  transition: transform 0.3s cubic-bezier(.22,.61,.36,1);
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ 캘린더 화면 ══ -->
+  <div id="calScreen" class="screen card active">
+    <div class="cal-header">
+      <div class="cal-title">✿ 나의 일기장 ✿</div>
+      <div class="month-nav">
+        <button class="nav-btn" id="btnPrev">&#8249;</button>
+        <span class="month-label" id="monthLabel"></span>
+        <button class="nav-btn" id="btnNext">&#8250;</button>
+      </div>
+    </div>
+    <div class="cal-grid">
+      <div class="dow-row">
+        <div class="dow sun">일</div>
+        <div class="dow">월</div>
+        <div class="dow">화</div>
+        <div class="dow">수</div>
+        <div class="dow">목</div>
+        <div class="dow">금</div>
+        <div class="dow sat">토</div>
+      </div>
+      <div class="days-grid" id="daysGrid"></div>
+    </div>
+    <div class="cal-footer">
+      <button class="today-btn" id="btnToday">오늘 일기 쓰기</button>
+    </div>
+  </div>
+
+  <!-- ══ 일기 화면 ══ -->
+  <div id="diaryScreen" class="screen card">
+    <div class="diary-header">
+      <button class="back-btn" id="btnBack">&#8249;</button>
+      <span class="hdr-title">일기장</span>
+      <button class="save-btn" id="btnSave">저장하기</button>
+    </div>
+    <div class="diary-body">
+
+      <!-- 날짜 + 날씨 -->
+      <div class="row-dw">
+        <div class="diary-date-txt" id="diaryDateTxt"></div>
+        <div class="weather-row" id="weatherRow">
+          <button class="w-btn" data-w="sun"   title="맑음">☀️</button>
+          <button class="w-btn" data-w="cloud" title="구름">⛅</button>
+          <button class="w-btn" data-w="rain"  title="비">🌧️</button>
+          <button class="w-btn" data-w="snow"  title="눈">❄️</button>
+        </div>
+      </div>
+
+      <!-- 상태 -->
+      <div class="sec">
+        <div class="sec-label">상태</div>
+        <div class="mood-row" id="moodRow">
+          <button class="m-btn" data-mood="happy"><span class="emo">😊</span><span class="mlbl">기쁨</span></button>
+          <button class="m-btn" data-mood="sad">  <span class="emo">😢</span><span class="mlbl">슬픔</span></button>
+          <button class="m-btn" data-mood="normal"><span class="emo">😐</span><span class="mlbl">보통</span></button>
+          <button class="m-btn" data-mood="angry"><span class="emo">😠</span><span class="mlbl">화남</span></button>
+          <button class="m-btn" data-mood="pain"> <span class="emo">🤕</span><span class="mlbl">아픔</span></button>
+        </div>
+      </div>
+
+      <!-- 해시태그 -->
+      <div class="sec">
+        <div class="sec-label">해시태그</div>
+        <div class="chip-row" id="hashChips"></div>
+        <div class="input-row">
+          <input class="t-input" id="hashInput" type="text" placeholder="# 태그 입력 후 Enter">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 두통 강도 -->
+      <div class="sec">
+        <div class="sec-label">두통 강도</div>
+        <div class="scale-row" id="headScale"></div>
+      </div>
+
+      <!-- 투약 시간 -->
+      <div class="sec">
+        <div class="sec-label">투약 시간</div>
+        <div class="time-bar" id="timeBar"></div>
+        <div class="time-ticks">
+          <span class="t-tick">0시</span>
+          <span class="t-tick">6시</span>
+          <span class="t-tick">12시</span>
+          <span class="t-tick">18시</span>
+          <span class="t-tick">24시</span>
+        </div>
+      </div>
+
+      <!-- 투약 약물명 -->
+      <div class="sec">
+        <div class="sec-label">투약 약물명</div>
+        <div class="chip-row" id="medChips"></div>
+        <div class="input-row">
+          <input class="t-input" id="medInput" type="text" placeholder="약물명 입력 후 Enter">
+          <button class="add-btn" id="btnAddMed">추가</button>
+        </div>
+        <a class="drug-link" href="https://www.druginfo.co.kr/index.aspx" target="_blank">🔍 드럭인포에서 약물 검색하기 →</a>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 일기 본문 -->
+      <div class="sec">
+        <div class="sec-label">일기</div>
+        <div class="diary-wrap">
+          <textarea class="diary-ta" id="diaryTa" placeholder="오늘 하루를 자유롭게 기록해요..."></textarea>
+          <button class="expand-btn" id="btnExpand">▼ 펼쳐서 보기</button>
+        </div>
+      </div>
+
+      <!-- 나에게 쓰는 한마디 -->
+      <div class="sec">
+        <div class="sec-label">나에게 쓰는 오늘의 한마디</div>
+        <input class="one-liner" id="oneLiner" type="text" placeholder="오늘의 나에게...">
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+
+window.onload = function () {
+
+  /* ── 상태 ── */
+  var navYear  = new Date().getFullYear();
+  var navMonth = new Date().getMonth();   // 0-indexed
+  var selYear  = 0, selMonth = 0, selDay = 0;
+  var entry    = {};
+  var expanded = false;
+
+  var todayY = new Date().getFullYear();
+  var todayM = new Date().getMonth();
+  var todayD = new Date().getDate();
+
+  /* ── 로컬스토리지 ── */
+  function getAll() {
+    try { return JSON.parse(localStorage.getItem('myDiary2') || '{}'); }
+    catch(e) { return {}; }
+  }
+  function setAll(obj) {
+    try { localStorage.setItem('myDiary2', JSON.stringify(obj)); } catch(e) {}
+  }
+  function makeKey(y, m, d) {
+    return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+  }
+  function loadEntry(y, m, d) {
+    return getAll()[makeKey(y, m, d)] || null;
+  }
+  function doSave() {
+    entry.diary    = document.getElementById('diaryTa').value;
+    entry.oneLiner = document.getElementById('oneLiner').value;
+    var all = getAll();
+    all[makeKey(selYear, selMonth, selDay)] = entry;
+    setAll(all);
+    drawCalendar();
+    showToast('✓ 저장되었어요');
+  }
+
+  /* ── 토스트 ── */
+  function showToast(msg) {
+    var el = document.getElementById('toastEl');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(function(){ el.classList.remove('show'); }, 2500);
+  }
+
+  /* ── 화면 전환 ── */
+  function goScreen(id) {
+    var screens = document.querySelectorAll('.screen');
+    for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  /* ── 캘린더 그리기 ── */
+  function drawCalendar() {
+    document.getElementById('monthLabel').textContent = navYear + '년 ' + (navMonth + 1) + '월';
+
+    var all = getAll();
+    var firstDow = new Date(navYear, navMonth, 1).getDay();
+    var lastDay  = new Date(navYear, navMonth + 1, 0).getDate();
+    var prevLast = new Date(navYear, navMonth, 0).getDate();
+    var grid = document.getElementById('daysGrid');
+    grid.innerHTML = '';
+
+    /* 이전달 빈칸 */
+    for (var i = 0; i < firstDow; i++) {
+      var cell = document.createElement('div');
+      cell.className = 'day other-month';
+      cell.textContent = prevLast - firstDow + i + 1;
+      grid.appendChild(cell);
+    }
+
+    /* 이번달 날짜 */
+    for (var day = 1; day <= lastDay; day++) {
+      (function(d) {
+        var dow  = new Date(navYear, navMonth, d).getDay();
+        var cell = document.createElement('div');
+        var cls  = 'day';
+        if (dow === 0) cls += ' sun-col';
+        if (dow === 6) cls += ' sat-col';
+        if (navYear === todayY && navMonth === todayM && d === todayD) cls += ' today';
+        cell.className = cls;
+        cell.textContent = d;
+
+        /* 일기 있으면 점 */
+        if (all[makeKey(navYear, navMonth, d)]) {
+          var dot = document.createElement('div');
+          dot.className = 'entry-dot';
+          cell.appendChild(dot);
+        }
+
+        /* ★ 날짜 클릭 → 일기 화면 ★ */
+        cell.onclick = function() {
+          openDiary(navYear, navMonth, d);
+        };
+
+        grid.appendChild(cell);
+      })(day);
+    }
+  }
+
+  /* ── 일기 열기 ── */
+  function openDiary(y, m, d) {
+    selYear  = y;
+    selMonth = m;
+    selDay   = d;
+
+    /* 날짜 표시 */
+    document.getElementById('diaryDateTxt').textContent =
+      y + '년 ' + (m + 1) + '월 ' + d + '일';
+
+    /* 엔트리 초기화 */
+    entry = { weather: null, mood: null, hashtags: [], headache: 0,
+              medTimes: [], medicines: [], diary: '', oneLiner: '' };
+
+    var saved = loadEntry(y, m, d);
+    if (saved) {
+      entry.weather   = saved.weather   || null;
+      entry.mood      = saved.mood      || null;
+      entry.hashtags  = saved.hashtags  || [];
+      entry.headache  = saved.headache  || 0;
+      entry.medTimes  = saved.medTimes  || [];
+      entry.medicines = saved.medicines || [];
+      entry.diary     = saved.diary     || '';
+      entry.oneLiner  = saved.oneLiner  || '';
+    }
+
+    /* UI 반영 */
+    refreshWeather();
+    refreshMood();
+    refreshHashChips();
+    refreshHeadScale();
+    refreshTimeBar();
+    refreshMedChips();
+
+    document.getElementById('diaryTa').value  = entry.diary;
+    document.getElementById('oneLiner').value = entry.oneLiner;
+    setExpanded(false);
+
+    goScreen('diaryScreen');
+  }
+
+  /* ── 날씨 ── */
+  function refreshWeather() {
+    document.querySelectorAll('.w-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.w === entry.weather);
+    });
+  }
+  document.getElementById('weatherRow').onclick = function(e) {
+    var btn = e.target.closest('.w-btn');
+    if (!btn) return;
+    entry.weather = (entry.weather === btn.dataset.w) ? null : btn.dataset.w;
+    refreshWeather();
+  };
+
+  /* ── 상태 ── */
+  function refreshMood() {
+    document.querySelectorAll('.m-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.mood === entry.mood);
+    });
+  }
+  document.getElementById('moodRow').onclick = function(e) {
+    var btn = e.target.closest('.m-btn');
+    if (!btn) return;
+    entry.mood = (entry.mood === btn.dataset.mood) ? null : btn.dataset.mood;
+    refreshMood();
+  };
+
+  /* ── 해시태그 ── */
+  function refreshHashChips() {
+    var wrap = document.getElementById('hashChips');
+    wrap.innerHTML = '';
+    entry.hashtags.forEach(function(tag, i) {
+      var chip = document.createElement('div');
+      chip.className = 'chip htag';
+      chip.innerHTML = '<span>' + tag + '</span><span class="rm">✕</span>';
+      chip.querySelector('.rm').onclick = function() {
+        entry.hashtags.splice(i, 1);
+        refreshHashChips();
+      };
+      wrap.appendChild(chip);
+    });
+  }
+  document.getElementById('hashInput').onkeydown = function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      var v = this.value.trim();
+      if (!v) return;
+      if (!v.startsWith('#')) v = '#' + v;
+      entry.hashtags.push(v);
+      this.value = '';
+      refreshHashChips();
+    }
+  };
+
+  /* ── 두통 강도 ── */
+  function refreshHeadScale() {
+    var scale = document.getElementById('headScale');
+    scale.innerHTML = '';
+    for (var i = 1; i <= 10; i++) {
+      (function(n) {
+        var cell = document.createElement('div');
+        cell.className = 'sc-cell' + (n <= entry.headache ? ' lit' : '');
+        cell.textContent = n;
+        cell.onclick = function() {
+          entry.headache = (entry.headache === n) ? 0 : n;
+          refreshHeadScale();
+        };
+        scale.appendChild(cell);
+      })(i);
+    }
+  }
+
+  /* ── 투약 시간 ── */
+  function refreshTimeBar() {
+    var bar = document.getElementById('timeBar');
+    bar.innerHTML = '';
+    var times = entry.medTimes || [];
+    for (var h = 0; h < 24; h++) {
+      (function(hour) {
+        var slot = document.createElement('div');
+        slot.className = 't-slot' + (times.indexOf(hour) >= 0 ? ' on' : '');
+        slot.title = hour + ':00';
+        slot.onclick = function() {
+          var idx = entry.medTimes.indexOf(hour);
+          if (idx >= 0) entry.medTimes.splice(idx, 1);
+          else { entry.medTimes.push(hour); entry.medTimes.sort(function(a,b){return a-b;}); }
+          refreshTimeBar();
+        };
+        bar.appendChild(slot);
+      })(h);
+    }
+  }
+
+  /* ── 약물명 ── */
+  function refreshMedChips() {
+    var wrap = document.getElementById('medChips');
+    wrap.innerHTML = '';
+    entry.medicines.forEach(function(med, i) {
+      var chip = document.createElement('div');
+      chip.className = 'chip med';
+      chip.innerHTML = '<span>' + med + '</span><span class="rm">✕</span>';
+      chip.querySelector('.rm').onclick = function() {
+        entry.medicines.splice(i, 1);
+        refreshMedChips();
+      };
+      wrap.appendChild(chip);
+    });
+  }
+  function addMed() {
+    var v = document.getElementById('medInput').value.trim();
+    if (!v) return;
+    entry.medicines.push(v);
+    document.getElementById('medInput').value = '';
+    refreshMedChips();
+  }
+  document.getElementById('medInput').onkeydown = function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); addMed(); }
+  };
+  document.getElementById('btnAddMed').onclick = addMed;
+
+  /* ── 일기 확장/축소 ── */
+  function setExpanded(val) {
+    expanded = val;
+    var ta  = document.getElementById('diaryTa');
+    var btn = document.getElementById('btnExpand');
+    if (expanded) { ta.classList.add('expanded'); btn.textContent = '▲ 접기'; }
+    else          { ta.classList.remove('expanded'); btn.textContent = '▼ 펼쳐서 보기'; }
+  }
+  document.getElementById('btnExpand').onclick = function() { setExpanded(!expanded); };
+  document.getElementById('diaryTa').onfocus = function() { setExpanded(true); };
+  document.getElementById('diaryTa').onblur  = function() {
+    setTimeout(function() {
+      if (document.activeElement !== document.getElementById('btnExpand')) setExpanded(false);
+    }, 150);
+  };
+
+  /* ── 버튼들 ── */
+  document.getElementById('btnPrev').onclick = function() {
+    navMonth--;
+    if (navMonth < 0) { navMonth = 11; navYear--; }
+    drawCalendar();
+  };
+  document.getElementById('btnNext').onclick = function() {
+    navMonth++;
+    if (navMonth > 11) { navMonth = 0; navYear++; }
+    drawCalendar();
+  };
+  document.getElementById('btnToday').onclick = function() {
+    openDiary(todayY, todayM, todayD);
+  };
+  document.getElementById('btnBack').onclick = function() {
+    goScreen('calScreen');
+  };
+  document.getElementById('btnSave').onclick = doSave;
+
+  /* 탭 숨김 시 자동 저장 */
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden && selYear > 0) doSave();
+  });
+
+  /* ── 시작 ── */
+  drawCalendar();
+
+}; // window.onload
+</script>
+</body>
+</html>
