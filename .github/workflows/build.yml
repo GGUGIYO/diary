@@ -16,20 +16,28 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Accept Android licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+      - name: Setup Android SDK
+        run: |
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdtools.zip
+          unzip -q /tmp/cmdtools.zip -d /tmp/
+          mv /tmp/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
       - name: Install SDK components
-        run: $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Install Gradle 8.1.1
+      - name: Install Gradle
         run: |
           wget -q https://services.gradle.org/distributions/gradle-8.1.1-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-8.1.1/bin" >> $GITHUB_PATH
 
       - name: Create local.properties
-        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+        run: echo "sdk.dir=$HOME/android-sdk" > android/local.properties
 
       - name: Generate icons
         run: |
