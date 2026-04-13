@@ -9,420 +9,280 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="나의 일기장">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: 'Noto Sans KR', sans-serif;
-  background: linear-gradient(145deg, #fce4ec 0%, #f3e5f5 50%, #ede7f6 100%);
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  padding: 20px 12px 60px;
+  padding: 0 0 60px;
 }
+body.spring { background: linear-gradient(160deg,#ffe0ef,#ffd6e7,#f3e5f5); }
+body.summer { background: linear-gradient(160deg,#e0f7e9,#b2f0d0,#d4f5f0); }
+body.autumn { background: linear-gradient(160deg,#fff3e0,#ffe0b2,#ffd7cc); }
+body.winter { background: linear-gradient(160deg,#e8f0fe,#e3e8f8,#dce8f8); }
 
-.app {
-  width: 100%;
-  max-width: 480px;
-}
-
-.screen { display: none !important; }
-.screen.active { display: block !important; }
-
-/* ─── CARD ─── */
+.app { width:100%; max-width:480px; position:relative; z-index:1; }
+.screen { display:none !important; }
+.screen.active { display:block !important; }
 .card {
-  background: #fff;
-  border-radius: 28px;
-  box-shadow: 0 8px 40px rgba(194,24,91,0.13);
+  background: rgba(255,255,255,0.93);
+  backdrop-filter: blur(12px);
+  border-radius: 0 0 24px 24px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.13);
   overflow: hidden;
+  min-height: 100vh;
+  position: relative;
 }
 
-/* ─── CALENDAR ─── */
+/* ══ CALENDAR HEADER with scene canvas ══ */
 .cal-header {
-  background: linear-gradient(135deg, #f06292, #ba68c8);
-  padding: 28px 20px 20px;
-  text-align: center;
+  position: relative;
+  overflow: hidden;
+  height: 210px;
   color: #fff;
+}
+#sceneCanvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: block;
+}
+.cal-header-ui {
+  position: relative;
+  z-index: 2;
+  height: 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, transparent 35%, transparent 60%, rgba(0,0,0,0.22) 100%);
 }
 .cal-title {
   font-family: 'Noto Serif KR', serif;
   font-weight: 300;
-  font-size: 1.1rem;
+  font-size: 1rem;
   letter-spacing: 3px;
-  margin-bottom: 18px;
-  opacity: 0.95;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
-.month-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
+.season-badge {
+  font-size: 0.72rem;
+  background: rgba(255,255,255,0.25);
+  padding: 2px 12px;
+  border-radius: 12px;
+  letter-spacing: 1px;
+  margin-top: -4px;
 }
+.month-nav { display:flex; align-items:center; justify-content:center; gap:18px; width:100%; }
 .nav-btn {
-  background: rgba(255,255,255,0.28);
-  border: none;
-  color: #fff;
-  width: 38px; height: 38px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.4rem;
-  line-height: 1;
+  background: rgba(255,255,255,0.28); border:none; color:#fff;
+  width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:1.3rem;
   transition: background 0.2s;
 }
 .nav-btn:hover { background: rgba(255,255,255,0.5); }
 .month-label {
-  font-size: 1.25rem;
-  font-weight: 600;
-  font-family: 'Noto Serif KR', serif;
-  min-width: 140px;
-  text-align: center;
+  font-size:1.2rem; font-weight:600; font-family:'Noto Serif KR',serif;
+  min-width:140px; text-align:center; text-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
-.cal-grid { padding: 14px 12px 10px; }
-.dow-row {
-  display: grid;
-  grid-template-columns: repeat(7,1fr);
-  margin-bottom: 6px;
-}
-.dow {
-  text-align: center;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: #bdbdbd;
-  padding: 5px 0;
-}
-.dow.sun { color: #f06292; }
-.dow.sat { color: #9575cd; }
-.days-grid {
-  display: grid;
-  grid-template-columns: repeat(7,1fr);
-  gap: 4px;
-}
+
+/* ══ CALENDAR GRID ══ */
+.cal-grid { padding:0; }
+.dow-row { display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid #f0e8f0; }
+.dow { text-align:center; font-size:0.7rem; font-weight:500; color:#b0b0b0; padding:8px 0; }
+.dow.sun { color:#ef9a9a; } .dow.sat { color:#9fa8da; }
+.days-grid { display:grid; grid-template-columns:repeat(7,1fr); }
 .day {
-  aspect-ratio: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 0.88rem;
-  position: relative;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.15s;
+  min-height:68px; padding:5px 3px 3px;
+  border-right:0.5px solid #f5eff5; border-bottom:0.5px solid #f5eff5;
+  cursor:pointer; display:flex; flex-direction:column; align-items:center;
+  gap:1px; transition:background 0.15s;
 }
-.day:hover { background: #fce4ec; }
-.day.other-month { color: #d8d8d8; pointer-events: none; }
-.day.sun-col { color: #f06292; }
-.day.sat-col { color: #9575cd; }
-.day.today {
-  background: linear-gradient(135deg, #f06292, #ba68c8) !important;
-  color: #fff !important;
-  font-weight: 600;
+.day:hover { background:rgba(240,98,146,0.07); }
+.day.other-month { opacity:0.28; pointer-events:none; }
+.day.sun-col .day-num { color:#e57373; }
+.day.sat-col .day-num { color:#7986cb; }
+.day.holiday .day-num { color:#e57373 !important; }
+.day-num {
+  width:28px; height:28px; display:flex; align-items:center; justify-content:center;
+  border-radius:50%; font-size:0.88rem; font-weight:400; color:#444;
 }
-.entry-dot {
-  position: absolute;
-  bottom: 3px;
-  width: 4px; height: 4px;
-  border-radius: 50%;
-  background: #f06292;
-  pointer-events: none;
-}
-.day.today .entry-dot { background: rgba(255,255,255,0.8); }
-
-.cal-footer {
-  padding: 14px 20px 22px;
-  display: flex;
-  justify-content: center;
-  border-top: 1px solid #fce4ec;
-}
+.day.today .day-num { font-weight:700; color:#fff !important; }
+body.spring .day.today .day-num { background:linear-gradient(135deg,#f48fb1,#ce93d8); }
+body.summer .day.today .day-num { background:linear-gradient(135deg,#26a69a,#66bb6a); }
+body.autumn .day.today .day-num { background:linear-gradient(135deg,#ff7043,#ffc107); }
+body.winter .day.today .day-num { background:linear-gradient(135deg,#5c6bc0,#29b6f6); }
+.day-holiday-name { font-size:0.5rem; color:#e57373; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; padding:0 2px; }
+.day-star { font-size:0.7rem; line-height:1; }
+.cal-footer { padding:12px 16px 18px; display:flex; justify-content:center; border-top:1px solid #f5eff5; }
 .today-btn {
-  background: linear-gradient(135deg, #f06292, #ba68c8);
-  color: #fff;
-  border: none;
-  padding: 12px 36px;
-  border-radius: 24px;
-  font-size: 0.9rem;
-  font-family: 'Noto Sans KR', sans-serif;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(240,98,146,0.38);
-  transition: all 0.2s;
+  color:#fff; border:none; padding:11px 32px; border-radius:22px;
+  font-size:0.88rem; font-family:'Noto Sans KR',sans-serif; cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,0.15); transition:all 0.2s;
+  background:linear-gradient(135deg,#f48fb1,#ce93d8);
 }
-.today-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(240,98,146,0.48); }
+body.summer .today-btn { background:linear-gradient(135deg,#26a69a,#66bb6a); }
+body.autumn .today-btn { background:linear-gradient(135deg,#ff7043,#ffc107); }
+body.winter .today-btn { background:linear-gradient(135deg,#5c6bc0,#29b6f6); }
+.today-btn:hover { transform:translateY(-2px); }
 
-/* ─── DIARY ─── */
-.diary-header {
-  background: linear-gradient(135deg, #f06292, #ba68c8);
-  padding: 16px 18px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* ══ WEATHER FX OVERLAY ══ */
+.weather-fx {
+  position:absolute; top:0; left:0; right:0; bottom:0;
+  pointer-events:none; z-index:2; overflow:hidden; display:block;
 }
+.r-drop {
+  position:absolute; width:2px; height:18px;
+  background:linear-gradient(to bottom, transparent, rgba(100,150,255,0.65));
+  border-radius:1px; animation:rd-fall linear infinite;
+}
+@keyframes rd-fall {
+  0%   { transform:translateY(-30px) translateX(0); opacity:0.8; }
+  100% { transform:translateY(110vh) translateX(28px); opacity:0.3; }
+}
+.s-flake {
+  position:absolute; color:rgba(210,235,255,0.9);
+  animation:sf-fall linear infinite; font-style:normal;
+}
+@keyframes sf-fall {
+  0%   { transform:translateY(-30px) translateX(0) rotate(0deg); opacity:0.9; }
+  50%  { transform:translateY(50vh) translateX(14px) rotate(180deg); opacity:0.7; }
+  100% { transform:translateY(110vh) translateX(-8px) rotate(360deg); opacity:0; }
+}
+.w-streak {
+  position:absolute; height:1px;
+  background:linear-gradient(to right, transparent, rgba(180,200,220,0.45), transparent);
+  animation:ws-move linear infinite;
+}
+@keyframes ws-move {
+  0%   { transform:translateX(-150px); opacity:0; }
+  20%  { opacity:0.8; }
+  80%  { opacity:0.5; }
+  100% { transform:translateX(150vw); opacity:0; }
+}
+
+/* ══ SHARED HEADER (diary/write) ══ */
+.diary-header, .write-header {
+  padding:14px 16px; display:flex; align-items:center; gap:10px; color:#fff;
+  background:linear-gradient(135deg,#f48fb1,#ce93d8);
+}
+body.summer .diary-header, body.summer .write-header { background:linear-gradient(135deg,#26a69a,#66bb6a); }
+body.autumn .diary-header, body.autumn .write-header { background:linear-gradient(135deg,#ff7043,#ffc107); }
+body.winter .diary-header, body.winter .write-header { background:linear-gradient(135deg,#5c6bc0,#29b6f6); }
 .back-btn {
-  background: rgba(255,255,255,0.28);
-  border: none;
-  color: #fff;
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.3rem;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.2s;
+  background:rgba(255,255,255,0.28); border:none; color:#fff;
+  width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1.2rem;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s;
 }
-.back-btn:hover { background: rgba(255,255,255,0.48); }
-.hdr-title {
-  color: #fff;
-  font-family: 'Noto Serif KR', serif;
-  font-weight: 300;
-  letter-spacing: 1px;
-}
+.back-btn:hover { background:rgba(255,255,255,0.48); }
+.hdr-title { color:#fff; font-family:'Noto Serif KR',serif; font-weight:300; letter-spacing:0.8px; flex:1; font-size:0.95rem; }
 .save-btn {
-  margin-left: auto;
-  background: rgba(255,255,255,0.28);
-  border: none;
-  color: #fff;
-  padding: 7px 18px;
-  border-radius: 18px;
-  cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 0.85rem;
-  flex-shrink: 0;
-  transition: background 0.2s;
+  background:rgba(255,255,255,0.28); border:none; color:#fff;
+  padding:6px 14px; border-radius:16px; cursor:pointer;
+  font-family:'Noto Sans KR',sans-serif; font-size:0.82rem; flex-shrink:0; transition:background 0.2s;
 }
-.save-btn:hover { background: rgba(255,255,255,0.48); }
+.save-btn:hover { background:rgba(255,255,255,0.48); }
 
-.diary-body { padding: 20px 18px 30px; }
+/* ══ DIARY BODY ══ */
+.diary-body { padding:16px 15px 28px; }
+.row-dw { display:flex; align-items:center; justify-content:space-between; padding-bottom:14px; border-bottom:1.5px solid rgba(240,98,146,0.15); margin-bottom:15px; }
+.diary-date-txt { font-family:'Noto Serif KR',serif; font-size:0.95rem; color:#5d4037; }
+.weather-row { display:flex; gap:5px; }
+.w-btn { background:none; border:2px solid #e0e0e0; width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:all 0.18s; }
+.w-btn.active { border-color:#f06292; background:#fce4ec; }
+.sec { margin-bottom:15px; }
+.sec-label { font-size:0.68rem; color:#c0a0b0; font-weight:500; letter-spacing:0.8px; margin-bottom:6px; }
+.mood-row { display:flex; gap:4px; }
+.m-btn { flex:1; background:none; border:2px solid #e0e0e0; border-radius:12px; padding:7px 2px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; transition:all 0.18s; }
+.m-btn .emo { font-size:1.1rem; } .m-btn .mlbl { font-size:0.58rem; color:#9e9e9e; }
+.m-btn.active { border-color:#f06292; background:#fce4ec; }
+.m-btn.active .mlbl { color:#e91e63; }
+.chip-row { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:7px; min-height:22px; }
+.chip { display:flex; align-items:center; gap:3px; padding:3px 9px; border-radius:14px; font-size:0.75rem; }
+.chip.htag { background:#f3e5f5; color:#7b1fa2; }
+.chip.med  { background:#fce4ec; color:#c2185b; }
+.rm { cursor:pointer; font-size:0.78rem; opacity:0.6; }
+.rm:hover { opacity:1; }
+.input-row { display:flex; gap:7px; }
+.t-input { flex:1; border:1.5px solid #e8e0e8; border-radius:11px; padding:7px 11px; font-size:0.83rem; font-family:'Noto Sans KR',sans-serif; outline:none; transition:border-color 0.2s; background:#fafafa; }
+.t-input:focus { border-color:#f06292; background:#fff; }
+.add-btn { background:linear-gradient(135deg,#f06292,#ba68c8); color:#fff; border:none; padding:7px 13px; border-radius:11px; cursor:pointer; font-size:0.8rem; font-family:'Noto Sans KR',sans-serif; white-space:nowrap; }
+.divider { height:1px; background:rgba(240,98,146,0.12); margin:15px 0; }
+.scale-row { display:flex; gap:2px; }
+.sc-cell { flex:1; height:28px; border-radius:5px; background:#f5f5f5; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.6rem; color:#ccc; transition:all 0.15s; user-select:none; }
+.sc-cell:hover { background:#fce4ec; color:#f06292; }
+.sc-cell.lit { background:linear-gradient(135deg,#f06292,#ba68c8); color:#fff; }
+.time-bar { display:flex; gap:1px; height:26px; border-radius:7px; overflow:hidden; }
+.t-slot { flex:1; background:#f0f0f0; cursor:pointer; transition:background 0.12s; }
+.t-slot:hover { background:#fce4ec; }
+.t-slot.on { background:linear-gradient(to bottom,#f48fb1,#ce93d8); }
+.time-ticks { display:flex; justify-content:space-between; margin-top:3px; padding:0 2px; }
+.t-tick { font-size:0.58rem; color:#ccc; }
+.diary-preview-card { border:2px solid rgba(240,98,146,0.25); border-radius:16px; overflow:hidden; cursor:pointer; transition:border-color 0.2s,box-shadow 0.2s; }
+.diary-preview-card:hover { border-color:#f06292; box-shadow:0 4px 16px rgba(240,98,146,0.15); }
+.diary-preview-content { padding:13px 15px; font-family:'Noto Serif KR',serif; font-size:0.88rem; line-height:1.85; color:#5d4037; min-height:70px; max-height:150px; overflow-y:auto; -webkit-overflow-scrolling:touch; white-space:pre-wrap; }
+.diary-preview-content.empty { color:#ccc; font-style:italic; font-family:'Noto Sans KR',sans-serif; font-size:0.82rem; }
+.diary-preview-btn { width:100%; background:rgba(244,143,177,0.1); border:none; border-top:1px solid rgba(240,98,146,0.12); padding:8px; font-size:0.78rem; color:#f06292; cursor:pointer; font-family:'Noto Sans KR',sans-serif; display:flex; align-items:center; justify-content:center; gap:5px; }
+.diary-preview-btn:hover { background:rgba(240,98,146,0.15); }
+.one-liner { width:100%; border:1.5px solid #e8e0e8; border-radius:13px; padding:11px 15px; font-family:'Noto Serif KR',serif; font-size:0.88rem; color:#5d4037; outline:none; background:#fafafa; transition:border-color 0.2s; }
+.one-liner:focus { border-color:#f06292; background:#fff; }
 
-/* Date + Weather */
-.row-dw {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 16px;
-  border-bottom: 1.5px solid #fce4ec;
-  margin-bottom: 18px;
-}
-.diary-date-txt {
-  font-family: 'Noto Serif KR', serif;
-  font-size: 1.02rem;
-  color: #5d4037;
-}
-.weather-row { display: flex; gap: 6px; }
-.w-btn {
-  background: none;
-  border: 2px solid #e0e0e0;
-  width: 38px; height: 38px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.05rem;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.18s;
-}
-.w-btn.active { border-color: #f06292; background: #fce4ec; }
+/* ══ WRITE SCREEN ══ */
+.write-body { padding:18px 16px 24px; display:flex; flex-direction:column; min-height:calc(100vh - 62px); }
+.write-date { font-family:'Noto Serif KR',serif; font-size:0.9rem; color:#a08888; margin-bottom:14px; }
+.write-ta-wrap { flex:1; border:1.5px solid rgba(240,98,146,0.2); border-radius:16px; padding:14px 16px; background:rgba(255,255,255,0.7); margin-bottom:14px; display:flex; flex-direction:column; }
+.write-ta { flex:1; width:100%; border:none; outline:none; font-family:'Noto Serif KR',serif; font-size:1rem; line-height:2; color:#4a3030; resize:none; background:transparent; min-height:280px; padding:0; }
+.write-ta::placeholder { color:#ddd; }
+.write-divider { height:1px; background:rgba(240,98,146,0.15); margin:10px 0 12px; }
+.write-oneliner-label { font-size:0.68rem; color:#c0a0b0; font-weight:500; letter-spacing:0.8px; margin-bottom:6px; }
+.write-oneliner { width:100%; border:none; outline:none; font-family:'Noto Serif KR',serif; font-size:0.9rem; color:#5d4037; background:transparent; padding:0; }
+.write-oneliner::placeholder { color:#ddd; }
+.write-actions { display:flex; gap:10px; }
+.write-save-btn { flex:1; padding:13px; border:none; border-radius:14px; font-family:'Noto Sans KR',sans-serif; font-size:0.9rem; color:#fff; cursor:pointer; font-weight:500; transition:all 0.2s; background:linear-gradient(135deg,#f48fb1,#ce93d8); }
+body.summer .write-save-btn { background:linear-gradient(135deg,#26a69a,#66bb6a); }
+body.autumn .write-save-btn { background:linear-gradient(135deg,#ff7043,#ffc107); }
+body.winter .write-save-btn { background:linear-gradient(135deg,#5c6bc0,#29b6f6); }
+.write-save-btn:hover { transform:translateY(-1px); }
+.write-print-btn { padding:13px 18px; border:2px solid rgba(240,98,146,0.3); border-radius:14px; font-family:'Noto Sans KR',sans-serif; font-size:0.85rem; color:#f06292; cursor:pointer; background:transparent; transition:all 0.2s; }
+.write-print-btn:hover { background:#fce4ec; }
 
-/* Section */
-.sec { margin-bottom: 18px; }
-.sec-label {
-  font-size: 0.72rem;
-  color: #c0a0b0;
-  font-weight: 500;
-  letter-spacing: 0.8px;
-  margin-bottom: 8px;
-}
+.toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(80px); background:rgba(80,50,50,0.88); color:#fff; padding:10px 24px; border-radius:22px; font-size:0.83rem; transition:transform 0.3s cubic-bezier(.22,.61,.36,1); z-index:9999; pointer-events:none; white-space:nowrap; }
+.toast.show { transform:translateX(-50%) translateY(0); }
 
-/* Mood */
-.mood-row { display: flex; gap: 6px; }
-.m-btn {
-  flex: 1;
-  background: none;
-  border: 2px solid #e0e0e0;
-  border-radius: 14px;
-  padding: 8px 2px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  transition: all 0.18s;
+#printArea { display:none; }
+@media print {
+  body > *:not(#printArea) { display:none !important; }
+  #printArea { display:block !important; }
 }
-.m-btn .emo { font-size: 1.2rem; }
-.m-btn .mlbl { font-size: 0.62rem; color: #9e9e9e; }
-.m-btn.active { border-color: #f06292; background: #fce4ec; }
-.m-btn.active .mlbl { color: #e91e63; }
-
-/* Chips */
-.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 24px; }
-.chip {
-  display: flex; align-items: center; gap: 4px;
-  padding: 4px 10px; border-radius: 16px; font-size: 0.78rem;
-}
-.chip.htag { background: #f3e5f5; color: #7b1fa2; }
-.chip.med  { background: #fce4ec; color: #c2185b; }
-.rm { cursor: pointer; font-size: 0.8rem; opacity: 0.6; }
-.rm:hover { opacity: 1; }
-
-.input-row { display: flex; gap: 8px; }
-.t-input {
-  flex: 1;
-  border: 1.5px solid #e8e0e8;
-  border-radius: 12px;
-  padding: 8px 12px;
-  font-size: 0.85rem;
-  font-family: 'Noto Sans KR', sans-serif;
-  outline: none;
-  transition: border-color 0.2s;
-  background: #fafafa;
-}
-.t-input:focus { border-color: #f06292; background: #fff; }
-.add-btn {
-  background: linear-gradient(135deg, #f06292, #ba68c8);
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-family: 'Noto Sans KR', sans-serif;
-  white-space: nowrap;
-}
-.drug-link {
-  display: inline-block;
-  margin-top: 5px;
-  font-size: 0.72rem;
-  color: #bbb;
-  text-decoration: none;
-}
-.drug-link:hover { color: #f06292; }
-
-.divider { height: 1px; background: #fce4ec; margin: 18px 0; }
-
-/* Headache scale */
-.scale-row { display: flex; gap: 3px; }
-.sc-cell {
-  flex: 1;
-  height: 30px;
-  border-radius: 6px;
-  background: #f5f5f5;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.62rem;
-  color: #ccc;
-  transition: all 0.15s;
-  user-select: none;
-}
-.sc-cell:hover { background: #fce4ec; color: #f06292; }
-.sc-cell.lit { background: linear-gradient(135deg, #f06292, #ba68c8); color: #fff; }
-
-/* Time bar */
-.time-bar {
-  display: flex; gap: 1px;
-  height: 28px;
-  border-radius: 8px;
-  overflow: hidden;
-}
-.t-slot {
-  flex: 1;
-  background: #f0f0f0;
-  cursor: pointer;
-  transition: background 0.12s;
-}
-.t-slot:hover { background: #fce4ec; }
-.t-slot.on { background: linear-gradient(to bottom, #f48fb1, #ce93d8); }
-.time-ticks {
-  display: flex; justify-content: space-between;
-  margin-top: 4px; padding: 0 2px;
-}
-.t-tick { font-size: 0.6rem; color: #ccc; }
-
-/* Diary textarea */
-.diary-wrap {
-  border: 2px solid #f06292;
-  border-radius: 16px;
-  overflow: hidden;
-}
-.diary-ta {
-  width: 100%;
-  border: none; outline: none;
-  padding: 14px 16px;
-  font-family: 'Noto Serif KR', serif;
-  font-size: 0.9rem;
-  line-height: 1.85;
-  color: #5d4037;
-  resize: none;
-  min-height: 150px;
-  max-height: 150px;
-  overflow: hidden;
-  transition: max-height 0.35s ease;
-  background: transparent;
-}
-.diary-ta.expanded { max-height: 600px; overflow-y: auto; }
-.expand-btn {
-  width: 100%;
-  background: #fce4ec;
-  border: none;
-  padding: 6px;
-  font-size: 0.72rem;
-  color: #f06292;
-  cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
-}
-.expand-btn:hover { background: #f8bbd0; }
-
-/* One-liner */
-.one-liner {
-  width: 100%;
-  border: 1.5px solid #e8e0e8;
-  border-radius: 14px;
-  padding: 12px 16px;
-  font-family: 'Noto Serif KR', serif;
-  font-size: 0.9rem;
-  color: #5d4037;
-  outline: none;
-  background: #fafafa;
-  transition: border-color 0.2s;
-}
-.one-liner:focus { border-color: #f06292; background: #fff; }
-
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 28px; left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: rgba(93,64,55,0.88);
-  color: #fff;
-  padding: 11px 26px;
-  border-radius: 24px;
-  font-size: 0.85rem;
-  transition: transform 0.3s cubic-bezier(.22,.61,.36,1);
-  z-index: 9999;
-  pointer-events: none;
-}
-.toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
+<div id="printArea"></div>
 <div class="app">
 
-  <!-- ══ 캘린더 화면 ══ -->
+  <!-- ══ 화면 1: 캘린더 ══ -->
   <div id="calScreen" class="screen card active">
     <div class="cal-header">
-      <div class="cal-title">✿ 나의 일기장 ✿</div>
-      <div class="month-nav">
-        <button class="nav-btn" id="btnPrev">&#8249;</button>
-        <span class="month-label" id="monthLabel"></span>
-        <button class="nav-btn" id="btnNext">&#8250;</button>
+      <canvas id="sceneCanvas"></canvas>
+      <div class="cal-header-ui">
+        <div>
+          <div class="cal-title">✿ 나의 일기장 ✿</div>
+          <div class="season-badge" id="seasonBadge"></div>
+        </div>
+        <div class="month-nav">
+          <button class="nav-btn" id="btnPrev">&#8249;</button>
+          <span class="month-label" id="monthLabel"></span>
+          <button class="nav-btn" id="btnNext">&#8250;</button>
+        </div>
       </div>
     </div>
     <div class="cal-grid">
       <div class="dow-row">
-        <div class="dow sun">일</div>
-        <div class="dow">월</div>
-        <div class="dow">화</div>
-        <div class="dow">수</div>
-        <div class="dow">목</div>
-        <div class="dow">금</div>
+        <div class="dow sun">일</div><div class="dow">월</div><div class="dow">화</div>
+        <div class="dow">수</div><div class="dow">목</div><div class="dow">금</div>
         <div class="dow sat">토</div>
       </div>
       <div class="days-grid" id="daysGrid"></div>
@@ -432,69 +292,51 @@ body {
     </div>
   </div>
 
-  <!-- ══ 일기 화면 ══ -->
+  <!-- ══ 화면 2: 일기 폼 ══ -->
   <div id="diaryScreen" class="screen card">
     <div class="diary-header">
       <button class="back-btn" id="btnBack">&#8249;</button>
-      <span class="hdr-title">일기장</span>
-      <button class="save-btn" id="btnSave">저장하기</button>
+      <span class="hdr-title" id="diaryHeaderTitle">일기장</span>
+      <button class="save-btn" id="btnSave">저장</button>
     </div>
     <div class="diary-body">
-
-      <!-- 날짜 + 날씨 -->
       <div class="row-dw">
         <div class="diary-date-txt" id="diaryDateTxt"></div>
         <div class="weather-row" id="weatherRow">
-          <button class="w-btn" data-w="sun"   title="맑음">☀️</button>
-          <button class="w-btn" data-w="cloud" title="구름">⛅</button>
-          <button class="w-btn" data-w="rain"  title="비">🌧️</button>
-          <button class="w-btn" data-w="snow"  title="눈">❄️</button>
+          <button class="w-btn" data-w="sun" title="맑음">☀️</button>
+          <button class="w-btn" data-w="cloud" title="바람">🌬️</button>
+          <button class="w-btn" data-w="rain" title="비">🌧️</button>
+          <button class="w-btn" data-w="snow" title="눈">❄️</button>
         </div>
       </div>
-
-      <!-- 상태 -->
       <div class="sec">
         <div class="sec-label">상태</div>
         <div class="mood-row" id="moodRow">
           <button class="m-btn" data-mood="happy"><span class="emo">😊</span><span class="mlbl">기쁨</span></button>
-          <button class="m-btn" data-mood="sad">  <span class="emo">😢</span><span class="mlbl">슬픔</span></button>
+          <button class="m-btn" data-mood="sad"><span class="emo">😢</span><span class="mlbl">슬픔</span></button>
           <button class="m-btn" data-mood="normal"><span class="emo">😐</span><span class="mlbl">보통</span></button>
           <button class="m-btn" data-mood="angry"><span class="emo">😠</span><span class="mlbl">화남</span></button>
-          <button class="m-btn" data-mood="pain"> <span class="emo">🤕</span><span class="mlbl">아픔</span></button>
+          <button class="m-btn" data-mood="pain"><span class="emo">🤕</span><span class="mlbl">아픔</span></button>
         </div>
       </div>
-
-      <!-- 해시태그 -->
       <div class="sec">
         <div class="sec-label">해시태그</div>
         <div class="chip-row" id="hashChips"></div>
-        <div class="input-row">
-          <input class="t-input" id="hashInput" type="text" placeholder="# 태그 입력 후 Enter">
-        </div>
+        <div class="input-row"><input class="t-input" id="hashInput" type="text" placeholder="# 태그 입력 후 Enter"></div>
       </div>
-
       <div class="divider"></div>
-
-      <!-- 두통 강도 -->
       <div class="sec">
         <div class="sec-label">두통 강도</div>
         <div class="scale-row" id="headScale"></div>
       </div>
-
-      <!-- 투약 시간 -->
       <div class="sec">
         <div class="sec-label">투약 시간</div>
         <div class="time-bar" id="timeBar"></div>
         <div class="time-ticks">
-          <span class="t-tick">0시</span>
-          <span class="t-tick">6시</span>
-          <span class="t-tick">12시</span>
-          <span class="t-tick">18시</span>
-          <span class="t-tick">24시</span>
+          <span class="t-tick">0시</span><span class="t-tick">6시</span>
+          <span class="t-tick">12시</span><span class="t-tick">18시</span><span class="t-tick">24시</span>
         </div>
       </div>
-
-      <!-- 투약 약물명 -->
       <div class="sec">
         <div class="sec-label">투약 약물명</div>
         <div class="chip-row" id="medChips"></div>
@@ -502,340 +344,879 @@ body {
           <input class="t-input" id="medInput" type="text" placeholder="약물명 입력 후 Enter">
           <button class="add-btn" id="btnAddMed">추가</button>
         </div>
-        <a class="drug-link" href="https://www.druginfo.co.kr/index.aspx" target="_blank">🔍 드럭인포에서 약물 검색하기 →</a>
       </div>
-
       <div class="divider"></div>
-
-      <!-- 일기 본문 -->
       <div class="sec">
-        <div class="sec-label">일기</div>
-        <div class="diary-wrap">
-          <textarea class="diary-ta" id="diaryTa" placeholder="오늘 하루를 자유롭게 기록해요..."></textarea>
-          <button class="expand-btn" id="btnExpand">▼ 펼쳐서 보기</button>
+        <div class="sec-label">일기 — 드래그해서 미리보기</div>
+        <div class="diary-preview-card" id="diaryPreviewCard">
+          <div class="diary-preview-content" id="diaryPreviewContent"></div>
+          <button class="diary-preview-btn" id="btnOpenWrite">✏️ 일기 쓰러 가기</button>
         </div>
       </div>
-
-      <!-- 나에게 쓰는 한마디 -->
       <div class="sec">
         <div class="sec-label">나에게 쓰는 오늘의 한마디</div>
         <input class="one-liner" id="oneLiner" type="text" placeholder="오늘의 나에게...">
       </div>
-
     </div>
+    <div class="weather-fx" id="weatherFX"></div>
   </div>
-</div>
 
+  <!-- ══ 화면 3: 일기 쓰기 ══ -->
+  <div id="writeScreen" class="screen card">
+    <div class="write-header">
+      <button class="back-btn" id="btnWriteBack">&#8249;</button>
+      <span class="hdr-title" id="writeHeaderTitle">일기 쓰기</span>
+    </div>
+    <div class="write-body">
+      <div class="write-date" id="writeDateTxt"></div>
+      <div class="write-ta-wrap">
+        <textarea class="write-ta" id="writeTa" placeholder="오늘 하루를 자유롭게 기록해요..."></textarea>
+        <div class="write-divider"></div>
+        <div class="write-oneliner-label">나에게 쓰는 오늘의 한마디</div>
+        <input class="write-oneliner" id="writeOneliner" type="text" placeholder="오늘의 나에게...">
+      </div>
+      <div class="write-actions">
+        <button class="write-save-btn" id="btnWriteSave">저장하기</button>
+        <button class="write-print-btn" id="btnWritePrint">🖨️ 인쇄</button>
+        <button class="write-print-btn" id="btnWriteDownload">📄 저장</button>
+      </div>
+    </div>
+    <div class="weather-fx" id="weatherFX2"></div>
+  </div>
+
+</div>
 <div class="toast" id="toastEl"></div>
 
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(function(){});
-}
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
 
 window.onload = function () {
 
-  /* ── 상태 ── */
-  var navYear  = new Date().getFullYear();
-  var navMonth = new Date().getMonth();   // 0-indexed
-  var selYear  = 0, selMonth = 0, selDay = 0;
-  var entry    = {};
-  var expanded = false;
+/* ── 계절 ── */
+function getSeason() {
+  var m = new Date().getMonth()+1, d = new Date().getDate(), md = m*100+d;
+  if (md>=204 && md<505) return 'spring';
+  if (md>=505 && md<807) return 'summer';
+  if (md>=807 && md<1107) return 'autumn';
+  return 'winter';
+}
+var TERMS = [[204,'입춘'],[321,'춘분'],[505,'입하'],[621,'하지'],[807,'입추'],[923,'추분'],[1107,'입동'],[1222,'동지']];
+var SLABELS = {spring:'🌸 봄',summer:'🌿 여름',autumn:'🍂 가을',winter:'❄️ 겨울'};
+function getSeasonBadge() {
+  var md = (new Date().getMonth()+1)*100 + new Date().getDate();
+  for (var i=0;i<TERMS.length;i++) if (Math.abs(md-TERMS[i][0])<=3) return TERMS[i][1]+' · '+SLABELS[getSeason()];
+  return SLABELS[getSeason()];
+}
+var curSeason = getSeason();
+document.body.className = curSeason;
+document.getElementById('seasonBadge').textContent = getSeasonBadge();
 
-  var todayY = new Date().getFullYear();
-  var todayM = new Date().getMonth();
-  var todayD = new Date().getDate();
+/* ══════════════════════════════════════
+   SCENE CANVAS
+══════════════════════════════════════ */
+var canvas = document.getElementById('sceneCanvas');
+var ctx = canvas.getContext('2d');
+var SW = 480, SH = 210;
+var windT = 0;
+var fallItems = [];
+var sceneStatic = {}; // pre-computed positions
 
-  /* ── 로컬스토리지 ── */
-  function getAll() {
-    try { return JSON.parse(localStorage.getItem('myDiary2') || '{}'); }
-    catch(e) { return {}; }
-  }
-  function setAll(obj) {
-    try { localStorage.setItem('myDiary2', JSON.stringify(obj)); } catch(e) {}
-  }
-  function makeKey(y, m, d) {
-    return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-  }
-  function loadEntry(y, m, d) {
-    return getAll()[makeKey(y, m, d)] || null;
-  }
-  function doSave() {
-    entry.diary    = document.getElementById('diaryTa').value;
-    entry.oneLiner = document.getElementById('oneLiner').value;
-    var all = getAll();
-    all[makeKey(selYear, selMonth, selDay)] = entry;
-    setAll(all);
-    drawCalendar();
-    showToast('✓ 저장되었어요');
-  }
+function initScene() {
+  SW = canvas.parentElement.offsetWidth || 480;
+  canvas.width  = SW;
+  canvas.height = SH;
+  precompute();
+  initFallItems();
+  (function tick(){
+    windT += 0.016;
+    fallItems.forEach(function(p){
+      p.x += p.vx + Math.sin(windT + p.y*0.02)*0.4;
+      p.y += p.vy;
+      p.rot += p.rotV;
+      if (p.y > SH+10) { p.y=-10; p.x=Math.random()*SW; }
+      if (p.x > SW+10) p.x=-10;
+      if (p.x < -10)   p.x=SW+10;
+    });
+    drawScene();
+    requestAnimationFrame(tick);
+  })();
+}
 
-  /* ── 토스트 ── */
-  function showToast(msg) {
-    var el = document.getElementById('toastEl');
-    el.textContent = msg;
-    el.classList.add('show');
-    setTimeout(function(){ el.classList.remove('show'); }, 2500);
-  }
+function precompute() {
+  /* cherry blossom petal positions on tree */
+  sceneStatic.cherryDots = [];
+  for (var i=0;i<18;i++) sceneStatic.cherryDots.push([(Math.random()-0.5)*52, (Math.random()-0.5)*46-70]);
+  /* summer cloud shapes */
+  sceneStatic.clouds = [{x:SW*0.55,y:28,r:22},{x:SW*0.62,y:24,r:18},{x:SW*0.7,y:26,r:16},{x:SW*0.8,y:20,r:20},{x:SW*0.87,y:17,r:15}];
+  /* ground flowers (spring/summer) */
+  sceneStatic.flowers = [];
+  for (var j=0;j<12;j++) sceneStatic.flowers.push({x:SW*(0.28+Math.random()*0.44), y:SH*(0.78+Math.random()*0.14), c:['#f48fb1','#ffe082','#fff','#f8bbd0','#ffcc80'][j%5]});
+  /* autumn falling leaf start positions */
+  sceneStatic.branchSnow = [];
+  for (var k=0;k<8;k++) sceneStatic.branchSnow.push({x:(Math.random()-0.5)*50, y:-60-Math.random()*30});
+}
 
-  /* ── 화면 전환 ── */
-  function goScreen(id) {
-    var screens = document.querySelectorAll('.screen');
-    for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
-    document.getElementById(id).classList.add('active');
-    window.scrollTo(0, 0);
-  }
-
-  /* ── 캘린더 그리기 ── */
-  function drawCalendar() {
-    document.getElementById('monthLabel').textContent = navYear + '년 ' + (navMonth + 1) + '월';
-
-    var all = getAll();
-    var firstDow = new Date(navYear, navMonth, 1).getDay();
-    var lastDay  = new Date(navYear, navMonth + 1, 0).getDate();
-    var prevLast = new Date(navYear, navMonth, 0).getDate();
-    var grid = document.getElementById('daysGrid');
-    grid.innerHTML = '';
-
-    /* 이전달 빈칸 */
-    for (var i = 0; i < firstDow; i++) {
-      var cell = document.createElement('div');
-      cell.className = 'day other-month';
-      cell.textContent = prevLast - firstDow + i + 1;
-      grid.appendChild(cell);
-    }
-
-    /* 이번달 날짜 */
-    for (var day = 1; day <= lastDay; day++) {
-      (function(d) {
-        var dow  = new Date(navYear, navMonth, d).getDay();
-        var cell = document.createElement('div');
-        var cls  = 'day';
-        if (dow === 0) cls += ' sun-col';
-        if (dow === 6) cls += ' sat-col';
-        if (navYear === todayY && navMonth === todayM && d === todayD) cls += ' today';
-        cell.className = cls;
-        cell.textContent = d;
-
-        /* 일기 있으면 점 */
-        if (all[makeKey(navYear, navMonth, d)]) {
-          var dot = document.createElement('div');
-          dot.className = 'entry-dot';
-          cell.appendChild(dot);
-        }
-
-        /* ★ 날짜 클릭 → 일기 화면 ★ */
-        cell.onclick = function() {
-          openDiary(navYear, navMonth, d);
-        };
-
-        grid.appendChild(cell);
-      })(day);
-    }
-  }
-
-  /* ── 일기 열기 ── */
-  function openDiary(y, m, d) {
-    selYear  = y;
-    selMonth = m;
-    selDay   = d;
-
-    /* 날짜 표시 */
-    document.getElementById('diaryDateTxt').textContent =
-      y + '년 ' + (m + 1) + '월 ' + d + '일';
-
-    /* 엔트리 초기화 */
-    entry = { weather: null, mood: null, hashtags: [], headache: 0,
-              medTimes: [], medicines: [], diary: '', oneLiner: '' };
-
-    var saved = loadEntry(y, m, d);
-    if (saved) {
-      entry.weather   = saved.weather   || null;
-      entry.mood      = saved.mood      || null;
-      entry.hashtags  = saved.hashtags  || [];
-      entry.headache  = saved.headache  || 0;
-      entry.medTimes  = saved.medTimes  || [];
-      entry.medicines = saved.medicines || [];
-      entry.diary     = saved.diary     || '';
-      entry.oneLiner  = saved.oneLiner  || '';
-    }
-
-    /* UI 반영 */
-    refreshWeather();
-    refreshMood();
-    refreshHashChips();
-    refreshHeadScale();
-    refreshTimeBar();
-    refreshMedChips();
-
-    document.getElementById('diaryTa').value  = entry.diary;
-    document.getElementById('oneLiner').value = entry.oneLiner;
-    setExpanded(false);
-
-    goScreen('diaryScreen');
-  }
-
-  /* ── 날씨 ── */
-  function refreshWeather() {
-    document.querySelectorAll('.w-btn').forEach(function(b) {
-      b.classList.toggle('active', b.dataset.w === entry.weather);
+function initFallItems() {
+  fallItems = [];
+  var cfgs = {
+    spring: {n:10, vys:[0.5,0.9],  colors:['#f8bbd0','#f48fb1','#fce4ec','#e91e63']},
+    summer: {n:6,  vys:[0.3,0.7],  colors:['#c8e6c9','#a5d6a7']},
+    autumn: {n:14, vys:[0.6,1.2],  colors:['#ff8a65','#ffb74d','#ef5350','#ffd54f','#bf360c']},
+    winter: {n:10, vys:[0.4,0.9],  colors:['#ffffff','#e3f2fd','#bbdefb']}
+  }[curSeason];
+  for (var i=0;i<cfgs.n;i++) {
+    fallItems.push({
+      x: Math.random()*SW, y: Math.random()*SH,
+      vx:(Math.random()-0.5)*0.5,
+      vy: cfgs.vys[0] + Math.random()*(cfgs.vys[1]-cfgs.vys[0]),
+      size: 2.5+Math.random()*4.5, rot:Math.random()*Math.PI*2,
+      rotV:(Math.random()-0.5)*0.06,
+      color: cfgs.colors[Math.floor(Math.random()*cfgs.colors.length)]
     });
   }
-  document.getElementById('weatherRow').onclick = function(e) {
-    var btn = e.target.closest('.w-btn');
-    if (!btn) return;
-    entry.weather = (entry.weather === btn.dataset.w) ? null : btn.dataset.w;
-    refreshWeather();
-  };
+}
 
-  /* ── 상태 ── */
-  function refreshMood() {
-    document.querySelectorAll('.m-btn').forEach(function(b) {
-      b.classList.toggle('active', b.dataset.mood === entry.mood);
-    });
+/* ── draw each season ── */
+function drawScene() {
+  ctx.clearRect(0,0,SW,SH);
+  if      (curSeason==='spring') drawSpring();
+  else if (curSeason==='summer') drawSummer();
+  else if (curSeason==='autumn') drawAutumn();
+  else                            drawWinter();
+  drawFallItems();
+}
+
+function lerp(a,b,t){ return a+(b-a)*t; }
+function sway(){ return Math.sin(windT*1.1)*0.028; }
+
+/* ── SPRING ── */
+function drawSpring() {
+  /* sky */
+  var sg = ctx.createLinearGradient(0,0,0,SH);
+  sg.addColorStop(0,'#b3e5fc'); sg.addColorStop(0.55,'#e1f5fe'); sg.addColorStop(1,'#c8e6c9');
+  ctx.fillStyle=sg; ctx.fillRect(0,0,SW,SH);
+  /* sun */
+  ctx.save(); ctx.globalAlpha=0.35; ctx.fillStyle='#fffde7';
+  ctx.beginPath(); ctx.arc(SW-55,38,38,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=0.9; ctx.fillStyle='#fff9c4';
+  ctx.beginPath(); ctx.arc(SW-55,38,22,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  /* rolling hill */
+  ctx.fillStyle='#a5d6a7';
+  ctx.beginPath(); ctx.moveTo(0,SH);
+  ctx.lineTo(0,SH*0.72);
+  ctx.bezierCurveTo(SW*0.22,SH*0.52, SW*0.48,SH*0.68, SW*0.72,SH*0.62);
+  ctx.bezierCurveTo(SW*0.88,SH*0.58, SW,SH*0.66, SW,SH);
+  ctx.closePath(); ctx.fill();
+  /* ground */
+  ctx.fillStyle='#81c784'; ctx.fillRect(0,SH*0.76,SW,SH*0.24);
+  /* grass blades */
+  ctx.strokeStyle='#66bb6a'; ctx.lineWidth=1.5;
+  for (var gx=10;gx<SW;gx+=18) {
+    ctx.beginPath(); ctx.moveTo(gx,SH*0.76);
+    ctx.quadraticCurveTo(gx+4,SH*0.68,gx+2,SH*0.62); ctx.stroke();
   }
-  document.getElementById('moodRow').onclick = function(e) {
-    var btn = e.target.closest('.m-btn');
-    if (!btn) return;
-    entry.mood = (entry.mood === btn.dataset.mood) ? null : btn.dataset.mood;
-    refreshMood();
-  };
+  /* cherry tree */
+  drawCherryTree(SW*0.18, SH*0.76, 1.0);
+  /* small sprouting tree */
+  drawSproutTree(SW*0.72, SH*0.79, 0.75);
+  /* ground flowers */
+  sceneStatic.flowers.forEach(function(f){ drawFlower(f.x,f.y,f.c,4); });
+  /* two people facing each other */
+  drawPerson(SW*0.42, SH*0.87, 0.55, '#795548', false);
+  drawPerson(SW*0.58, SH*0.87, 0.55, '#a1887f', true);
+  /* heart between them */
+  ctx.fillStyle='#f06292'; ctx.font='bold 14px serif'; ctx.textAlign='center';
+  ctx.fillText('♥', SW*0.5, SH*0.74);
+  /* sparkle lines (new connection) */
+  ctx.strokeStyle='rgba(240,98,146,0.5)'; ctx.lineWidth=1; ctx.setLineDash([3,4]);
+  ctx.beginPath(); ctx.moveTo(SW*0.45,SH*0.83); ctx.lineTo(SW*0.55,SH*0.83); ctx.stroke();
+  ctx.setLineDash([]);
+}
 
-  /* ── 해시태그 ── */
-  function refreshHashChips() {
-    var wrap = document.getElementById('hashChips');
-    wrap.innerHTML = '';
-    entry.hashtags.forEach(function(tag, i) {
-      var chip = document.createElement('div');
-      chip.className = 'chip htag';
-      chip.innerHTML = '<span>' + tag + '</span><span class="rm">✕</span>';
-      chip.querySelector('.rm').onclick = function() {
-        entry.hashtags.splice(i, 1);
-        refreshHashChips();
-      };
-      wrap.appendChild(chip);
-    });
-  }
-  document.getElementById('hashInput').onkeydown = function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      var v = this.value.trim();
-      if (!v) return;
-      if (!v.startsWith('#')) v = '#' + v;
-      entry.hashtags.push(v);
-      this.value = '';
-      refreshHashChips();
-    }
-  };
-
-  /* ── 두통 강도 ── */
-  function refreshHeadScale() {
-    var scale = document.getElementById('headScale');
-    scale.innerHTML = '';
-    for (var i = 1; i <= 10; i++) {
-      (function(n) {
-        var cell = document.createElement('div');
-        cell.className = 'sc-cell' + (n <= entry.headache ? ' lit' : '');
-        cell.textContent = n;
-        cell.onclick = function() {
-          entry.headache = (entry.headache === n) ? 0 : n;
-          refreshHeadScale();
-        };
-        scale.appendChild(cell);
-      })(i);
-    }
-  }
-
-  /* ── 투약 시간 ── */
-  function refreshTimeBar() {
-    var bar = document.getElementById('timeBar');
-    bar.innerHTML = '';
-    var times = entry.medTimes || [];
-    for (var h = 0; h < 24; h++) {
-      (function(hour) {
-        var slot = document.createElement('div');
-        slot.className = 't-slot' + (times.indexOf(hour) >= 0 ? ' on' : '');
-        slot.title = hour + ':00';
-        slot.onclick = function() {
-          var idx = entry.medTimes.indexOf(hour);
-          if (idx >= 0) entry.medTimes.splice(idx, 1);
-          else { entry.medTimes.push(hour); entry.medTimes.sort(function(a,b){return a-b;}); }
-          refreshTimeBar();
-        };
-        bar.appendChild(slot);
-      })(h);
-    }
-  }
-
-  /* ── 약물명 ── */
-  function refreshMedChips() {
-    var wrap = document.getElementById('medChips');
-    wrap.innerHTML = '';
-    entry.medicines.forEach(function(med, i) {
-      var chip = document.createElement('div');
-      chip.className = 'chip med';
-      chip.innerHTML = '<span>' + med + '</span><span class="rm">✕</span>';
-      chip.querySelector('.rm').onclick = function() {
-        entry.medicines.splice(i, 1);
-        refreshMedChips();
-      };
-      wrap.appendChild(chip);
-    });
-  }
-  function addMed() {
-    var v = document.getElementById('medInput').value.trim();
-    if (!v) return;
-    entry.medicines.push(v);
-    document.getElementById('medInput').value = '';
-    refreshMedChips();
-  }
-  document.getElementById('medInput').onkeydown = function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); addMed(); }
-  };
-  document.getElementById('btnAddMed').onclick = addMed;
-
-  /* ── 일기 확장/축소 ── */
-  function setExpanded(val) {
-    expanded = val;
-    var ta  = document.getElementById('diaryTa');
-    var btn = document.getElementById('btnExpand');
-    if (expanded) { ta.classList.add('expanded'); btn.textContent = '▲ 접기'; }
-    else          { ta.classList.remove('expanded'); btn.textContent = '▼ 펼쳐서 보기'; }
-  }
-  document.getElementById('btnExpand').onclick = function() { setExpanded(!expanded); };
-  document.getElementById('diaryTa').onfocus = function() { setExpanded(true); };
-  document.getElementById('diaryTa').onblur  = function() {
-    setTimeout(function() {
-      if (document.activeElement !== document.getElementById('btnExpand')) setExpanded(false);
-    }, 150);
-  };
-
-  /* ── 버튼들 ── */
-  document.getElementById('btnPrev').onclick = function() {
-    navMonth--;
-    if (navMonth < 0) { navMonth = 11; navYear--; }
-    drawCalendar();
-  };
-  document.getElementById('btnNext').onclick = function() {
-    navMonth++;
-    if (navMonth > 11) { navMonth = 0; navYear++; }
-    drawCalendar();
-  };
-  document.getElementById('btnToday').onclick = function() {
-    openDiary(todayY, todayM, todayD);
-  };
-  document.getElementById('btnBack').onclick = function() {
-    goScreen('calScreen');
-  };
-  document.getElementById('btnSave').onclick = doSave;
-
-  /* 탭 숨김 시 자동 저장 */
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden && selYear > 0) doSave();
+function drawCherryTree(x, groundY, sc) {
+  var lean = sway();
+  ctx.save(); ctx.translate(x, groundY); ctx.rotate(lean);
+  /* trunk */
+  ctx.fillStyle='#6d4c41';
+  ctx.beginPath(); ctx.moveTo(-5*sc,0); ctx.lineTo(5*sc,0);
+  ctx.lineTo(4*sc,-65*sc); ctx.lineTo(-4*sc,-65*sc); ctx.closePath(); ctx.fill();
+  /* branches */
+  ctx.strokeStyle='#6d4c41'; ctx.lineWidth=4*sc;
+  ctx.beginPath(); ctx.moveTo(-2*sc,-50*sc); ctx.lineTo(-22*sc,-75*sc); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(2*sc,-52*sc); ctx.lineTo(20*sc,-72*sc); ctx.stroke();
+  /* blossom clusters */
+  var clusters=[
+    [0,-80*sc,30*sc,'#f8bbd0'],[-22*sc,-72*sc,20*sc,'#f48fb1'],
+    [22*sc,-70*sc,20*sc,'#f8bbd0'],[-10*sc,-93*sc,18*sc,'#fce4ec'],
+    [10*sc,-90*sc,22*sc,'#f48fb1']
+  ];
+  clusters.forEach(function(c){
+    ctx.fillStyle=c[3];
+    ctx.beginPath(); ctx.arc(c[0],c[1],c[2],0,Math.PI*2); ctx.fill();
   });
+  /* white flower dots */
+  ctx.fillStyle='#fff';
+  sceneStatic.cherryDots.forEach(function(d){
+    ctx.beginPath(); ctx.arc(d[0]*sc,d[1]*sc,1.8*sc,0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+}
 
-  /* ── 시작 ── */
-  drawCalendar();
+function drawSproutTree(x, groundY, sc) {
+  ctx.save(); ctx.translate(x,groundY); ctx.rotate(sway()*0.5);
+  ctx.fillStyle='#795548';
+  ctx.fillRect(-3*sc,-45*sc,6*sc,45*sc);
+  /* small new leaves */
+  var lc='#aed581';
+  [[0,-48*sc,12*sc],[-10*sc,-40*sc,8*sc],[10*sc,-42*sc,8*sc]].forEach(function(l){
+    ctx.fillStyle=lc; ctx.beginPath(); ctx.arc(l[0],l[1],l[2],0,Math.PI*2); ctx.fill();
+  });
+  /* tiny flowers on leaves */
+  ctx.fillStyle='#fff9c4';
+  [[-3*sc,-50*sc],[4*sc,-46*sc],[-8*sc,-40*sc],[8*sc,-43*sc]].forEach(function(d){
+    ctx.beginPath(); ctx.arc(d[0],d[1],2,0,Math.PI*2); ctx.fill();
+  });
+  /* ground sprouts */
+  ctx.strokeStyle='#66bb6a'; ctx.lineWidth=1.5;
+  for (var i=-3;i<=3;i++) {
+    ctx.beginPath(); ctx.moveTo(i*8*sc,0); ctx.quadraticCurveTo(i*8*sc+5,-(12+Math.abs(i)*3)*sc,i*8*sc+2,-(18+Math.abs(i)*4)*sc); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ── SUMMER ── */
+function drawSummer() {
+  var sg=ctx.createLinearGradient(0,0,0,SH);
+  sg.addColorStop(0,'#4fc3f7'); sg.addColorStop(0.5,'#b3e5fc'); sg.addColorStop(1,'#c8e6c9');
+  ctx.fillStyle=sg; ctx.fillRect(0,0,SW,SH);
+  /* clouds */
+  ctx.fillStyle='rgba(255,255,255,0.88)';
+  sceneStatic.clouds.forEach(function(c){
+    ctx.beginPath(); ctx.arc(c.x+Math.sin(windT*0.4)*3,c.y,c.r,0,Math.PI*2); ctx.fill();
+  });
+  /* sun */
+  ctx.save(); ctx.globalAlpha=0.3; ctx.fillStyle='#fffde7';
+  ctx.beginPath(); ctx.arc(SW-50,40,44,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1; ctx.fillStyle='#ffe082';
+  ctx.beginPath(); ctx.arc(SW-50,40,25,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  /* ground */
+  ctx.fillStyle='#388e3c'; ctx.fillRect(0,SH*0.72,SW,SH*0.28);
+  ctx.fillStyle='#43a047'; ctx.fillRect(0,SH*0.72,SW,6);
+  /* big leafy tree */
+  drawSummerTree(SW*0.17,SH*0.72,1.05);
+  /* colorful wildflowers */
+  sceneStatic.flowers.forEach(function(f){ drawFlower(f.x,f.y,f.c,5); });
+  /* second smaller tree right */
+  drawSummerTree(SW*0.82,SH*0.75,0.7);
+  /* children running */
+  drawRunningKid(SW*0.52,SH*0.86,0.6,'#f8bbd0',1);
+  drawRunningKid(SW*0.64,SH*0.87,0.55,'#b2ebf2',-1);
+  /* butterfly */
+  drawButterfly(SW*0.42,SH*0.42);
+}
+
+function drawSummerTree(x,groundY,sc) {
+  ctx.save(); ctx.translate(x,groundY); ctx.rotate(sway()*0.5);
+  ctx.fillStyle='#5d4037';
+  ctx.fillRect(-7*sc,-80*sc,14*sc,80*sc);
+  [[0,-100*sc,38*sc,'#2e7d32'],[-22*sc,-90*sc,26*sc,'#388e3c'],[22*sc,-88*sc,26*sc,'#43a047'],
+   [-8*sc,-118*sc,22*sc,'#1b5e20'],[12*sc,-115*sc,20*sc,'#2e7d32']].forEach(function(c){
+    ctx.fillStyle=c[3]; ctx.beginPath(); ctx.arc(c[0],c[1],c[2],0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawRunningKid(x,y,sc,shirtColor,dir) {
+  ctx.save(); ctx.translate(x,y); ctx.scale(dir,1);
+  /* head */ ctx.fillStyle='#ffcc80'; ctx.beginPath(); ctx.arc(0,-32*sc,8*sc,0,Math.PI*2); ctx.fill();
+  /* hair */ ctx.fillStyle='#5d4037';
+  ctx.beginPath(); ctx.arc(0,-38*sc,7*sc,Math.PI,0); ctx.fill();
+  /* body */ ctx.fillStyle=shirtColor; ctx.fillRect(-7*sc,-28*sc,14*sc,18*sc);
+  /* arms (running pose) */
+  ctx.strokeStyle=shirtColor; ctx.lineWidth=3*sc;
+  ctx.beginPath(); ctx.moveTo(-6*sc,-22*sc); ctx.lineTo(-16*sc,-12*sc); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(6*sc,-22*sc); ctx.lineTo(12*sc,-30*sc); ctx.stroke();
+  /* legs */
+  ctx.strokeStyle='#3f51b5'; ctx.lineWidth=3.5*sc;
+  ctx.beginPath(); ctx.moveTo(-3*sc,-10*sc); ctx.lineTo(-10*sc,6*sc); ctx.lineTo(-6*sc,18*sc); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(3*sc,-10*sc); ctx.lineTo(10*sc,2*sc); ctx.lineTo(14*sc,16*sc); ctx.stroke();
+  ctx.restore();
+}
+
+function drawButterfly(x,y) {
+  var flap = Math.sin(windT*6)*0.4;
+  ctx.save(); ctx.translate(x,y);
+  ctx.fillStyle='rgba(255,152,0,0.75)';
+  ctx.beginPath(); ctx.ellipse(-8,0,10,6,flap,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(8,0,10,6,-flap,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,87,34,0.6)';
+  ctx.beginPath(); ctx.ellipse(-6,2,6,4,flap,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(6,2,6,4,-flap,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#3e2723'; ctx.beginPath(); ctx.arc(0,0,2,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+/* ── AUTUMN ── */
+function drawAutumn() {
+  var sg=ctx.createLinearGradient(0,0,0,SH);
+  sg.addColorStop(0,'#ff8f00'); sg.addColorStop(0.4,'#ffd54f'); sg.addColorStop(0.75,'#ffe0b2'); sg.addColorStop(1,'#d7ccc8');
+  ctx.fillStyle=sg; ctx.fillRect(0,0,SW,SH);
+  /* pale sun */
+  ctx.save(); ctx.globalAlpha=0.25; ctx.fillStyle='#ffe082';
+  ctx.beginPath(); ctx.arc(60,38,36,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=0.8; ctx.fillStyle='#ffd54f';
+  ctx.beginPath(); ctx.arc(60,38,20,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  /* ground */
+  ctx.fillStyle='#a1887f'; ctx.fillRect(0,SH*0.73,SW,SH*0.27);
+  ctx.fillStyle='#8d6e63'; ctx.fillRect(0,SH*0.73,SW,5);
+  /* fallen leaves on ground */
+  ['#e65100','#ff8a65','#ffd54f','#bf360c'].forEach(function(c,i){
+    ctx.fillStyle=c;
+    for (var j=0;j<4;j++){
+      var lx=SW*(0.05+i*0.22+j*0.04), ly=SH*(0.8+j*0.04);
+      ctx.beginPath(); ctx.ellipse(lx,ly,5,3,j*0.5,0,Math.PI*2); ctx.fill();
+    }
+  });
+  /* autumn tree */
+  drawAutumnTree(SW*0.2,SH*0.73,1.0);
+  /* rice paddy (right side) */
+  drawRicePaddy(SW*0.45, SH*0.73, SW*0.5, SH*0.27);
+  /* scarecrow */
+  drawScarecrow(SW*0.72, SH*0.73);
+}
+
+function drawAutumnTree(x,groundY,sc) {
+  ctx.save(); ctx.translate(x,groundY); ctx.rotate(sway()*0.8);
+  ctx.fillStyle='#6d4c41';
+  ctx.beginPath(); ctx.moveTo(-6*sc,0); ctx.lineTo(6*sc,0);
+  ctx.lineTo(4*sc,-72*sc); ctx.lineTo(-4*sc,-72*sc); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#6d4c41'; ctx.lineWidth=3.5*sc;
+  ctx.beginPath(); ctx.moveTo(-2*sc,-55*sc); ctx.lineTo(-24*sc,-78*sc); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(2*sc,-58*sc); ctx.lineTo(22*sc,-75*sc); ctx.stroke();
+  var cls=[
+    [0,-88*sc,32*sc,'#bf360c'],[-24*sc,-78*sc,20*sc,'#e65100'],
+    [22*sc,-76*sc,20*sc,'#ff8a65'],[-8*sc,-106*sc,18*sc,'#e65100'],
+    [10*sc,-103*sc,22*sc,'#ff8a65'],[0,-88*sc,18*sc,'#ffd54f']
+  ];
+  cls.forEach(function(c){
+    ctx.fillStyle=c[3]; ctx.beginPath(); ctx.arc(c[0],c[1],c[2],0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawRicePaddy(x,y,w,h) {
+  /* field background */
+  ctx.fillStyle='#f9a825';
+  ctx.fillRect(x,y,w,h);
+  ctx.fillStyle='#f57f17';
+  ctx.fillRect(x,y,w,3);
+  /* stalks */
+  var rows=3, cols=Math.floor(w/14);
+  for (var r=0;r<rows;r++) {
+    for (var c=0;c<cols;c++) {
+      var sx=x+c*14+7, sy=y+h*(0.2+r*0.3);
+      ctx.strokeStyle='#e65100'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(sx,sy+18); ctx.lineTo(sx,sy); ctx.stroke();
+      /* grain head */
+      ctx.fillStyle='#f9a825';
+      ctx.beginPath(); ctx.ellipse(sx,sy,3,6,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#ff8f00';
+      ctx.beginPath(); ctx.ellipse(sx,sy,1.5,3,0,0,Math.PI*2); ctx.fill();
+    }
+  }
+}
+
+function drawScarecrow(x,groundY) {
+  ctx.save(); ctx.translate(x,groundY);
+  /* pole */ ctx.strokeStyle='#795548'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-75); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-22,-52); ctx.lineTo(22,-52); ctx.stroke();
+  /* shirt */ ctx.fillStyle='#8d6e63'; ctx.fillRect(-10,-72,20,24);
+  /* pants */ ctx.fillStyle='#1565c0'; ctx.fillRect(-8,-48,7,22); ctx.fillRect(1,-48,7,22);
+  /* straw from wrists */ ctx.strokeStyle='#fdd835'; ctx.lineWidth=1;
+  for (var i=-3;i<=3;i++) {
+    ctx.beginPath(); ctx.moveTo(-22,-52); ctx.lineTo(-22+i*2,-38); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(22,-52); ctx.lineTo(22+i*2,-38); ctx.stroke();
+  }
+  /* head */ ctx.fillStyle='#ffcc80'; ctx.beginPath(); ctx.arc(0,-82,12,0,Math.PI*2); ctx.fill();
+  /* hat */ ctx.fillStyle='#4e342e'; ctx.fillRect(-11,-97,22,4); ctx.fillRect(-9,-112,18,15);
+  /* straw from hat */ ctx.strokeStyle='#fdd835'; ctx.lineWidth=1;
+  for (var j=-2;j<=2;j++) { ctx.beginPath(); ctx.moveTo(j*3,-97); ctx.lineTo(j*4,-89); ctx.stroke(); }
+  /* X eyes */ ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
+  [[-5,-84],[ 5,-84]].forEach(function(e){
+    ctx.beginPath(); ctx.moveTo(e[0]-2,e[1]-2); ctx.lineTo(e[0]+2,e[1]+2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(e[0]+2,e[1]-2); ctx.lineTo(e[0]-2,e[1]+2); ctx.stroke();
+  });
+  /* smile */ ctx.strokeStyle='#e65100';
+  ctx.beginPath(); ctx.arc(0,-79,4,0.1,Math.PI-0.1); ctx.stroke();
+  ctx.restore();
+}
+
+/* ── WINTER ── */
+function drawWinter() {
+  var sg=ctx.createLinearGradient(0,0,0,SH);
+  sg.addColorStop(0,'#90a4ae'); sg.addColorStop(0.5,'#cfd8dc'); sg.addColorStop(0.75,'#eceff1'); sg.addColorStop(1,'#fff');
+  ctx.fillStyle=sg; ctx.fillRect(0,0,SW,SH);
+  /* pale sun */ ctx.save(); ctx.globalAlpha=0.2; ctx.fillStyle='#e3f2fd';
+  ctx.beginPath(); ctx.arc(SW-60,36,36,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=0.7; ctx.fillStyle='#b0bec5';
+  ctx.beginPath(); ctx.arc(SW-60,36,18,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  /* snow ground */
+  ctx.fillStyle='#eceff1'; ctx.fillRect(0,SH*0.72,SW,SH*0.28);
+  /* snow mound shape */
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.moveTo(0,SH*0.72);
+  ctx.bezierCurveTo(SW*0.2,SH*0.65, SW*0.4,SH*0.7, SW*0.6,SH*0.67);
+  ctx.bezierCurveTo(SW*0.75,SH*0.65, SW*0.9,SH*0.7, SW,SH*0.72);
+  ctx.lineTo(SW,SH); ctx.lineTo(0,SH); ctx.closePath(); ctx.fill();
+  /* footprints */
+  ctx.fillStyle='#cfd8dc';
+  [[SW*0.35,SH*0.82],[SW*0.38,SH*0.85],[SW*0.41,SH*0.82],[SW*0.44,SH*0.85]].forEach(function(p){
+    ctx.beginPath(); ctx.ellipse(p[0],p[1],5,3,0.3,0,Math.PI*2); ctx.fill();
+  });
+  /* bare tree */
+  drawBareTree(SW*0.2,SH*0.72,1.0);
+  /* snowman */
+  drawSnowman(SW*0.62,SH*0.72);
+}
+
+function drawBareTree(x,groundY,sc) {
+  var sw=sway();
+  ctx.save(); ctx.translate(x,groundY); ctx.rotate(sw*0.6);
+  ctx.strokeStyle='#546e7a'; ctx.lineWidth=9*sc;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-75*sc); ctx.stroke();
+  /* main branches */
+  var branches=[[-0.3,-65*sc,sw*2,40*sc],[ 0.4,-60*sc,sw*2,35*sc],[-0.5,-78*sc,sw*1.5,28*sc],[0.6,-75*sc,sw*1.5,25*sc]];
+  branches.forEach(function(b){
+    ctx.save(); ctx.translate(0,b[1]); ctx.rotate(b[0]+b[2]);
+    ctx.lineWidth=4*sc;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(b[3]*sc,-22*sc); ctx.stroke();
+    /* sub-branches */
+    ctx.save(); ctx.translate(b[3]*sc,-18*sc); ctx.lineWidth=2*sc;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(10*sc,-12*sc); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8*sc,-10*sc); ctx.stroke();
+    ctx.restore(); ctx.restore();
+  });
+  /* snow on branches */
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  sceneStatic.branchSnow.forEach(function(bs){
+    ctx.beginPath(); ctx.ellipse(bs.x*sc,bs.y*sc,7*sc,3*sc,0,0,Math.PI*2); ctx.fill();
+  });
+  /* snow at trunk base */
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.ellipse(0,-2,18*sc,6*sc,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawSnowman(x,groundY) {
+  ctx.save(); ctx.translate(x,groundY);
+  var bob = Math.sin(windT*0.8)*1.5; // gentle bob
+  ctx.translate(0,bob);
+  /* bottom */ ctx.fillStyle='#eceff1'; ctx.strokeStyle='#b0bec5'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(0,-18,20,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  /* middle */ ctx.beginPath(); ctx.arc(0,-50,15,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  /* head */ ctx.beginPath(); ctx.arc(0,-74,11,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  /* scarf */ ctx.fillStyle='#ef5350'; ctx.fillRect(-14,-63,28,5); ctx.fillRect(-12,-68,8,5);
+  /* hat */ ctx.fillStyle='#37474f'; ctx.fillRect(-10,-88,20,3); ctx.fillRect(-8,-103,16,15);
+  /* hat stripe */ ctx.fillStyle='#ef5350'; ctx.fillRect(-8,-95,16,3);
+  /* eyes */ ctx.fillStyle='#263238';
+  ctx.beginPath(); ctx.arc(-4,-76,2,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(4,-76,2,0,Math.PI*2); ctx.fill();
+  /* carrot nose */ ctx.fillStyle='#ff7043';
+  ctx.beginPath(); ctx.moveTo(0,-73); ctx.lineTo(7,-71); ctx.lineTo(0,-69); ctx.closePath(); ctx.fill();
+  /* smile dots */ ctx.fillStyle='#263238';
+  [-4,-2,0,2,4].forEach(function(sx,i){ if(i%2===0){ ctx.beginPath(); ctx.arc(sx+(i-2)*0.5,-68+(Math.abs(i-2)*0.5),1.2,0,Math.PI*2); ctx.fill(); }});
+  /* buttons */ ctx.fillStyle='#546e7a';
+  [-40,-50,-60].forEach(function(by){ ctx.beginPath(); ctx.arc(0,by,2.5,0,Math.PI*2); ctx.fill(); });
+  /* stick arms */ ctx.strokeStyle='#546e7a'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(-14,-48); ctx.lineTo(-28,-36); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(14,-48); ctx.lineTo(28,-36); ctx.stroke();
+  /* twig fingers */
+  ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(-28,-36); ctx.lineTo(-33,-28); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-28,-36); ctx.lineTo(-35,-38); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(28,-36); ctx.lineTo(33,-28); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(28,-36); ctx.lineTo(35,-38); ctx.stroke();
+  ctx.restore();
+}
+
+/* ── HELPERS ── */
+function drawFlower(x,y,c,r) {
+  ctx.fillStyle=c;
+  for (var i=0;i<5;i++) {
+    var a=i*Math.PI*2/5, px=x+Math.cos(a)*r*1.6, py=y+Math.sin(a)*r*1.6;
+    ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle='#fff9c4'; ctx.beginPath(); ctx.arc(x,y,r*0.7,0,Math.PI*2); ctx.fill();
+}
+
+function drawPerson(x,y,sc,color,flip) {
+  ctx.save(); ctx.translate(x,y); if(flip) ctx.scale(-1,1);
+  ctx.fillStyle='#ffcc80';
+  ctx.beginPath(); ctx.arc(0,-33*sc,7*sc,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=color;
+  ctx.fillRect(-6*sc,-28*sc,12*sc,16*sc);
+  ctx.strokeStyle=color; ctx.lineWidth=2.5*sc;
+  ctx.beginPath(); ctx.moveTo(-6*sc,-22*sc); ctx.lineTo(-14*sc,-14*sc); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(6*sc,-22*sc); ctx.lineTo(14*sc,-16*sc); ctx.stroke();
+  ctx.strokeStyle='#5c6bc0'; ctx.lineWidth=3*sc;
+  ctx.beginPath(); ctx.moveTo(-3*sc,-12*sc); ctx.lineTo(-5*sc,4*sc); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(3*sc,-12*sc); ctx.lineTo(5*sc,4*sc); ctx.stroke();
+  ctx.restore();
+}
+
+function drawFallItems() {
+  fallItems.forEach(function(p) {
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+    if (curSeason==='winter') {
+      ctx.fillStyle='rgba(255,255,255,0.82)';
+      ctx.beginPath(); ctx.arc(0,0,p.size,0,Math.PI*2); ctx.fill();
+      /* simple snowflake arms */
+      ctx.strokeStyle='rgba(200,225,255,0.7)'; ctx.lineWidth=1;
+      for (var a=0;a<6;a++) {
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a*Math.PI/3)*p.size*1.8,Math.sin(a*Math.PI/3)*p.size*1.8); ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle=p.color;
+      ctx.beginPath(); ctx.ellipse(0,0,p.size,p.size*0.55,0,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  });
+}
+
+/* ══════════════════════════════════════
+   WEATHER FX OVERLAY
+══════════════════════════════════════ */
+function setWeatherFX(w) {
+  ['weatherFX','weatherFX2'].forEach(function(id){
+    var fx=document.getElementById(id); if(!fx) return;
+    fx.innerHTML='';
+    if (w==='rain') {
+      for (var i=0;i<55;i++) {
+        var d=document.createElement('div'); d.className='r-drop';
+        d.style.left=Math.random()*110+'%';
+        d.style.top='-20px';
+        d.style.animationDelay=(Math.random()*1.2)+'s';
+        d.style.animationDuration=(0.45+Math.random()*0.35)+'s';
+        d.style.height=(14+Math.random()*10)+'px';
+        d.style.opacity=(0.5+Math.random()*0.4)+'';
+        fx.appendChild(d);
+      }
+    } else if (w==='snow') {
+      var flakeChars=['❄','❅','❆','✦','·'];
+      for (var j=0;j<35;j++) {
+        var s=document.createElement('span'); s.className='s-flake';
+        s.textContent=flakeChars[j%flakeChars.length];
+        s.style.left=Math.random()*100+'%';
+        s.style.top='-30px';
+        s.style.fontSize=(8+Math.random()*14)+'px';
+        s.style.animationDelay=(Math.random()*3)+'s';
+        s.style.animationDuration=(2+Math.random()*3)+'s';
+        fx.appendChild(s);
+      }
+    } else if (w==='cloud') {
+      for (var k=0;k<18;k++) {
+        var ws=document.createElement('div'); ws.className='w-streak';
+        ws.style.top=Math.random()*100+'%';
+        ws.style.width=(40+Math.random()*90)+'px';
+        ws.style.animationDelay=(Math.random()*2)+'s';
+        ws.style.animationDuration=(1.5+Math.random()*1.5)+'s';
+        ws.style.opacity=(0.5+Math.random()*0.4)+'';
+        fx.appendChild(ws);
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════
+   HOLIDAYS
+══════════════════════════════════════ */
+var HOLIDAYS={};
+function addH(y,m,d,n){HOLIDAYS[y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')]=n;}
+[2024,2025,2026].forEach(function(y){
+  addH(y,1,1,'신정');addH(y,3,1,'삼일절');addH(y,5,5,'어린이날');
+  addH(y,6,6,'현충일');addH(y,8,15,'광복절');
+  addH(y,10,3,'개천절');addH(y,10,9,'한글날');addH(y,12,25,'성탄절');
+});
+addH(2024,2,9,'설전날');addH(2024,2,10,'설날');addH(2024,2,11,'설다음날');
+addH(2025,1,28,'설전날');addH(2025,1,29,'설날');addH(2025,1,30,'설다음날');
+addH(2026,2,16,'설전날');addH(2026,2,17,'설날');addH(2026,2,18,'설다음날');
+addH(2024,9,16,'추석전날');addH(2024,9,17,'추석');addH(2024,9,18,'추석다음날');
+addH(2025,10,5,'추석전날');addH(2025,10,6,'추석');addH(2025,10,7,'추석다음날');
+addH(2026,9,24,'추석전날');addH(2026,9,25,'추석');addH(2026,9,26,'추석다음날');
+addH(2024,5,15,'부처님오신날');addH(2025,5,5,'부처님오신날');addH(2026,5,24,'부처님오신날');
+addH(2024,9,23,'대체공휴일');addH(2025,3,3,'대체공휴일');addH(2025,5,6,'대체공휴일');addH(2026,8,17,'대체공휴일');
+/* 선거일 (확정/예정) */
+addH(2026,6,3,'지방선거');
+addH(2027,3,3,'대통령선거(예정)');
+addH(2028,4,15,'총선(예정)');
+
+/* ── 공휴일 자동 업데이트 (Nager.Date API) ── */
+function fetchLiveHolidays(year) {
+  var key = 'hol_kr_' + year;
+  try {
+    var cached = JSON.parse(localStorage.getItem(key) || 'null');
+    if (cached && cached.exp > Date.now()) {
+      Object.keys(cached.data).forEach(function(k){ if(!HOLIDAYS[k]) HOLIDAYS[k]=cached.data[k]; });
+      return;
+    }
+  } catch(e) {}
+  fetch('https://date.nager.at/api/v3/PublicHolidays/' + year + '/KR')
+    .then(function(r){ return r.json(); })
+    .then(function(arr){
+      var data = {};
+      arr.forEach(function(h){
+        var name = h.localName || h.name;
+        data[h.date] = name;
+        if (!HOLIDAYS[h.date]) HOLIDAYS[h.date] = name;
+      });
+      try { localStorage.setItem(key, JSON.stringify({data:data, exp:Date.now()+30*86400000})); } catch(e) {}
+      drawCalendar();
+    })
+    .catch(function(){});
+}
+
+/* ══════════════════════════════════════
+   APP STATE & STORAGE
+══════════════════════════════════════ */
+var navYear=new Date().getFullYear(), navMonth=new Date().getMonth();
+var selYear=0,selMonth=0,selDay=0, entry={};
+var todayY=new Date().getFullYear(),todayM=new Date().getMonth(),todayD=new Date().getDate();
+
+function getAll(){try{return JSON.parse(localStorage.getItem('myDiary2')||'{}');}catch(e){return{};}}
+function setAll(o){try{localStorage.setItem('myDiary2',JSON.stringify(o));}catch(e){}}
+function makeKey(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+function loadEntry(y,m,d){return getAll()[makeKey(y,m,d)]||null;}
+
+function doSave(){
+  entry.oneLiner=document.getElementById('oneLiner').value;
+  var a=getAll();a[makeKey(selYear,selMonth,selDay)]=entry;setAll(a);
+  drawCalendar();updatePreview();showToast('✓ 저장되었어요');
+}
+function doWriteSave(){
+  entry.diary=document.getElementById('writeTa').value;
+  entry.oneLiner=document.getElementById('writeOneliner').value;
+  document.getElementById('oneLiner').value=entry.oneLiner;
+  var a=getAll();a[makeKey(selYear,selMonth,selDay)]=entry;setAll(a);
+  drawCalendar();updatePreview();showToast('✓ 저장되었어요');
+  goScreen('diaryScreen');
+}
+function buildDiaryHTML() {
+  var dows=['일','월','화','수','목','금','토'];
+  var dow=dows[new Date(selYear,selMonth,selDay).getDay()];
+  var ds=selYear+'년 '+(selMonth+1)+'월 '+selDay+'일 ('+dow+')';
+  var wmap={sun:'☀️ 맑음',cloud:'🌬️ 바람',rain:'🌧️ 비',snow:'❄️ 눈'};
+  var mmap={happy:'😊 기쁨',sad:'😢 슬픔',normal:'😐 보통',angry:'😠 화남',pain:'🤕 아픔'};
+  var pink='#f06292', light='#fce4ec', gray='#f5f5f5', dark='#4a3030', sub='#9e8888';
+
+  /* 두통 바 */
+  var headBar='';
+  for(var i=1;i<=10;i++){
+    var on=i<=entry.headache;
+    headBar+='<span style="display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;font-size:11px;border-radius:5px;margin:1px;background:'+(on?pink:gray)+';color:'+(on?'#fff':'#ccc')+';">'+i+'</span>';
+  }
+
+  /* 투약 시간 바 */
+  var medBar='', medTimes=entry.medTimes||[];
+  for(var h=0;h<24;h++){
+    var on2=medTimes.indexOf(h)>=0;
+    medBar+='<span title="'+h+':00" style="display:inline-block;width:calc(4.1% - 2px);height:14px;border-radius:3px;margin:1px;background:'+(on2?pink:'#eee')+';"></span>';
+  }
+
+  var s='<div style="font-family:\'Noto Serif KR\',serif;max-width:680px;margin:0 auto;padding:36px 32px;color:#333;">';
+  s+='<div style="text-align:center;margin-bottom:28px;">';
+  s+='<div style="font-size:11px;letter-spacing:3px;color:'+sub+';margin-bottom:6px;">나의 일기장</div>';
+  s+='<div style="font-size:22px;font-weight:600;color:'+dark+';">'+ds+'</div>';
+  s+='</div>';
+
+  /* 날씨 + 상태 */
+  var meta=[];
+  if(entry.weather)meta.push(wmap[entry.weather]);
+  if(entry.mood)meta.push(mmap[entry.mood]);
+  if(meta.length) s+='<div style="display:flex;gap:12px;margin-bottom:20px;">'+meta.map(function(m){return '<span style="background:'+light+';color:'+pink+';padding:5px 14px;border-radius:20px;font-size:14px;">'+m+'</span>';}).join('')+'</div>';
+
+  /* 해시태그 */
+  if(entry.hashtags&&entry.hashtags.length)
+    s+='<div style="margin-bottom:18px;">'+entry.hashtags.map(function(t){return '<span style="background:#f3e5f5;color:#7b1fa2;padding:3px 10px;border-radius:12px;font-size:13px;margin-right:5px;">'+t+'</span>';}).join('')+'</div>';
+
+  /* 두통 */
+  if(entry.headache>0)
+    s+='<div style="margin-bottom:18px;"><div style="font-size:11px;color:'+sub+';margin-bottom:6px;letter-spacing:1px;">두통 강도 ('+entry.headache+'/10)</div>'+headBar+'</div>';
+
+  /* 투약 시간 */
+  if(medTimes.length)
+    s+='<div style="margin-bottom:18px;"><div style="font-size:11px;color:'+sub+';margin-bottom:6px;letter-spacing:1px;">투약 시간 ('+medTimes.map(function(h){return h+'시';}).join(', ')+')</div><div style="white-space:nowrap;">'+medBar+'</div></div>';
+
+  /* 약물 */
+  if(entry.medicines&&entry.medicines.length)
+    s+='<div style="margin-bottom:18px;font-size:14px;"><span style="color:'+sub+';">투약 약물:</span> <strong>'+entry.medicines.join(', ')+'</strong></div>';
+
+  s+='<hr style="border:none;border-top:1px solid '+light+';margin:20px 0;">';
+
+  /* 일기 본문 */
+  s+='<div style="border:1.5px solid #f8bbd0;border-radius:14px;padding:22px 24px;min-height:180px;margin-bottom:20px;">';
+  s+='<div style="font-size:11px;color:'+sub+';letter-spacing:1px;margin-bottom:14px;">일기</div>';
+  s+='<div style="font-size:15px;line-height:2.1;white-space:pre-wrap;color:'+dark+';">'+(entry.diary||'<span style="color:#ccc;">오늘의 일기가 비어있어요.</span>')+'</div>';
+  s+='</div>';
+
+  /* 한마디 */
+  if(entry.oneLiner)
+    s+='<div style="text-align:center;background:'+light+';border-radius:14px;padding:18px 20px;">'+'<div style="font-size:11px;color:'+sub+';letter-spacing:1px;margin-bottom:8px;">나에게 쓰는 오늘의 한마디</div>'+'<div style="font-size:16px;font-style:italic;color:#c2185b;">&ldquo;'+entry.oneLiner+'&rdquo;</div>'+'</div>';
+
+  s+='</div>';
+  return s;
+}
+
+function doPrint(){
+  var area=document.getElementById('printArea');
+  area.innerHTML=buildDiaryHTML();
+  area.style.display='block';
+  window.print();
+  setTimeout(function(){area.style.display='none';},1500);
+}
+
+function downloadAsWord(){
+  var ds=selYear+'년 '+(selMonth+1)+'월 '+selDay+'일';
+  var fn='일기_'+selYear+String(selMonth+1).padStart(2,'0')+String(selDay).padStart(2,'0')+'.doc';
+  var fullHtml='<!DOCTYPE html>'
+    +'<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">'
+    +'<head><meta charset="UTF-8"><title>'+ds+' 일기</title>'
+    +'<style>body{font-family:"Malgun Gothic",serif;margin:0;} @page{margin:25mm;}</style>'
+    +'</head><body>'+buildDiaryHTML()+'</body></html>';
+  var blob=new Blob(['\ufeff',fullHtml],{type:'application/msword'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=fn;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  showToast('📄 Word 파일로 저장됐어요');
+}
+
+function showToast(msg){
+  var el=document.getElementById('toastEl');el.textContent=msg;el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2500);
+}
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ══ CALENDAR ══ */
+function drawCalendar(){
+  fetchLiveHolidays(navYear);
+  if (navMonth >= 10) fetchLiveHolidays(navYear + 1); // 연말엔 다음해도 미리
+  document.getElementById('monthLabel').textContent=navYear+'년 '+(navMonth+1)+'월';
+  var all=getAll(),firstDow=new Date(navYear,navMonth,1).getDay();
+  var lastDay=new Date(navYear,navMonth+1,0).getDate(),prevLast=new Date(navYear,navMonth,0).getDate();
+  var grid=document.getElementById('daysGrid');grid.innerHTML='';
+  function mkCell(n,cls){var c=document.createElement('div');c.className=cls;var s=document.createElement('span');s.className='day-num';s.textContent=n;c.appendChild(s);return c;}
+  for(var i=0;i<firstDow;i++)grid.appendChild(mkCell(prevLast-firstDow+i+1,'day other-month'));
+  for(var day=1;day<=lastDay;day++){(function(d){
+    var dow=new Date(navYear,navMonth,d).getDay();
+    var hKey=navYear+'-'+String(navMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var holiday=HOLIDAYS[hKey];
+    var cls='day'+(holiday||dow===0?' sun-col':dow===6?' sat-col':'')+(holiday?' holiday':'')+(navYear===todayY&&navMonth===todayM&&d===todayD?' today':'');
+    var cell=document.createElement('div');cell.className=cls;
+    var num=document.createElement('span');num.className='day-num';num.textContent=d;cell.appendChild(num);
+    if(holiday){var hn=document.createElement('div');hn.className='day-holiday-name';hn.textContent=holiday;cell.appendChild(hn);}
+    if(all[makeKey(navYear,navMonth,d)]){var st=document.createElement('div');st.className='day-star';st.textContent='⭐';cell.appendChild(st);}
+    cell.onclick=function(){openDiary(navYear,navMonth,d);};
+    grid.appendChild(cell);
+  })(day);}
+  var rem=(firstDow+lastDay)%7;if(rem>0)for(var j=1;j<=7-rem;j++)grid.appendChild(mkCell(j,'day other-month'));
+}
+
+function updatePreview(){
+  var c=document.getElementById('diaryPreviewContent'),b=document.getElementById('btnOpenWrite');
+  if(entry.diary&&entry.diary.trim()){c.textContent=entry.diary;c.classList.remove('empty');b.textContent='✏️ 수정하기';}
+  else{c.textContent='아직 일기를 쓰지 않았어요. 탭해서 오늘 하루를 기록해보세요 🌷';c.classList.add('empty');b.textContent='✏️ 일기 쓰러 가기';}
+}
+
+function openDiary(y,m,d){
+  selYear=y;selMonth=m;selDay=d;
+  var hKey=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  var ds=y+'년 '+(m+1)+'월 '+d+'일'+(HOLIDAYS[hKey]?' · '+HOLIDAYS[hKey]:'');
+  document.getElementById('diaryDateTxt').textContent=ds;
+  document.getElementById('diaryHeaderTitle').textContent=y+'년 '+(m+1)+'월 '+d+'일';
+  entry={weather:null,mood:null,hashtags:[],headache:0,medTimes:[],medicines:[],diary:'',oneLiner:''};
+  var saved=loadEntry(y,m,d);
+  if(saved){entry.weather=saved.weather||null;entry.mood=saved.mood||null;entry.hashtags=saved.hashtags||[];entry.headache=saved.headache||0;entry.medTimes=saved.medTimes||[];entry.medicines=saved.medicines||[];entry.diary=saved.diary||'';entry.oneLiner=saved.oneLiner||'';}
+  refreshWeather();refreshMood();refreshHashChips();refreshHeadScale();refreshTimeBar();refreshMedChips();
+  document.getElementById('oneLiner').value=entry.oneLiner;
+  updatePreview();
+  setWeatherFX(entry.weather);
+  goScreen('diaryScreen');
+}
+
+function openWrite(){
+  var ds=selYear+'년 '+(selMonth+1)+'월 '+selDay+'일';
+  document.getElementById('writeDateTxt').textContent=ds;
+  document.getElementById('writeHeaderTitle').textContent=ds;
+  document.getElementById('writeTa').value=entry.diary||'';
+  document.getElementById('writeOneliner').value=entry.oneLiner||'';
+  goScreen('writeScreen');
+  setTimeout(function(){document.getElementById('writeTa').focus();},300);
+}
+
+/* ── weather/mood/etc ── */
+function refreshWeather(){document.querySelectorAll('.w-btn').forEach(function(b){b.classList.toggle('active',b.dataset.w===entry.weather);});}
+document.getElementById('weatherRow').onclick=function(e){
+  var btn=e.target.closest('.w-btn');if(!btn)return;
+  entry.weather=(entry.weather===btn.dataset.w)?null:btn.dataset.w;
+  refreshWeather();setWeatherFX(entry.weather);
+};
+function refreshMood(){document.querySelectorAll('.m-btn').forEach(function(b){b.classList.toggle('active',b.dataset.mood===entry.mood);});}
+document.getElementById('moodRow').onclick=function(e){var btn=e.target.closest('.m-btn');if(!btn)return;entry.mood=(entry.mood===btn.dataset.mood)?null:btn.dataset.mood;refreshMood();};
+function refreshHashChips(){
+  var w=document.getElementById('hashChips');w.innerHTML='';
+  entry.hashtags.forEach(function(t,i){var c=document.createElement('div');c.className='chip htag';c.innerHTML='<span>'+t+'</span><span class="rm">✕</span>';c.querySelector('.rm').onclick=function(){entry.hashtags.splice(i,1);refreshHashChips();};w.appendChild(c);});
+}
+document.getElementById('hashInput').onkeydown=function(e){if(e.key!=='Enter')return;e.preventDefault();var v=this.value.trim();if(!v)return;if(!v.startsWith('#'))v='#'+v;entry.hashtags.push(v);this.value='';refreshHashChips();};
+function refreshHeadScale(){
+  var s=document.getElementById('headScale');s.innerHTML='';
+  for(var i=1;i<=10;i++){(function(n){var c=document.createElement('div');c.className='sc-cell'+(n<=entry.headache?' lit':'');c.textContent=n;c.onclick=function(){entry.headache=(entry.headache===n)?0:n;refreshHeadScale();};s.appendChild(c);})(i);}
+}
+function refreshTimeBar(){
+  var b=document.getElementById('timeBar');b.innerHTML='';
+  for(var h=0;h<24;h++){(function(hour){var s=document.createElement('div');s.className='t-slot'+(entry.medTimes.indexOf(hour)>=0?' on':'');s.title=hour+':00';s.onclick=function(){var idx=entry.medTimes.indexOf(hour);if(idx>=0)entry.medTimes.splice(idx,1);else{entry.medTimes.push(hour);entry.medTimes.sort(function(a,b){return a-b;});}refreshTimeBar();};b.appendChild(s);})(h);}
+}
+function refreshMedChips(){
+  var w=document.getElementById('medChips');w.innerHTML='';
+  entry.medicines.forEach(function(m,i){var c=document.createElement('div');c.className='chip med';c.innerHTML='<span>'+m+'</span><span class="rm">✕</span>';c.querySelector('.rm').onclick=function(){entry.medicines.splice(i,1);refreshMedChips();};w.appendChild(c);});
+}
+function addMed(){var v=document.getElementById('medInput').value.trim();if(!v)return;entry.medicines.push(v);document.getElementById('medInput').value='';refreshMedChips();}
+document.getElementById('medInput').onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();addMed();}};
+document.getElementById('btnAddMed').onclick=addMed;
+
+/* ── buttons ── */
+document.getElementById('btnPrev').onclick=function(){navMonth--;if(navMonth<0){navMonth=11;navYear--;}drawCalendar();};
+document.getElementById('btnNext').onclick=function(){navMonth++;if(navMonth>11){navMonth=0;navYear++;}drawCalendar();};
+document.getElementById('btnToday').onclick=function(){openDiary(todayY,todayM,todayD);};
+document.getElementById('btnBack').onclick=function(){doSave();setWeatherFX(null);goScreen('calScreen');};
+document.getElementById('btnSave').onclick=doSave;
+document.getElementById('diaryPreviewCard').onclick=openWrite;
+document.getElementById('btnOpenWrite').onclick=function(e){e.stopPropagation();openWrite();};
+document.getElementById('btnWriteBack').onclick=doWriteSave;
+document.getElementById('btnWriteSave').onclick=doWriteSave;
+document.getElementById('btnWritePrint').onclick=doPrint;
+document.getElementById('btnWriteDownload').onclick=downloadAsWord;
+
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden&&selYear>0){
+    if(document.getElementById('writeScreen').classList.contains('active')){entry.diary=document.getElementById('writeTa').value;entry.oneLiner=document.getElementById('writeOneliner').value;}
+    else{entry.oneLiner=document.getElementById('oneLiner').value;}
+    var a=getAll();a[makeKey(selYear,selMonth,selDay)]=entry;setAll(a);
+  }
+});
+
+/* ── START ── */
+drawCalendar();
+initScene();
 
 }; // window.onload
 </script>
