@@ -16,28 +16,37 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdtools.zip
-          unzip -q /tmp/cmdtools.zip -d /tmp/
-          mv /tmp/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+      - name: Accept Android licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Install SDK components
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+        run: $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Install Gradle
+      # ── 서명 키스토어 영구 보관 ──
+      # 처음 빌드 시 키스토어 생성 후 캐시에 저장
+      # 이후 빌드는 캐시에서 복원 → 항상 같은 키로 서명 → 재설치 충돌 없음
+      - name: Restore keystore from cache
+        id: keystore-cache
+        uses: actions/cache@v4
+        with:
+          path: android/app/diary-key.jks
+          key: diary-signing-keystore-v1
+
+      - name: Generate keystore (최초 1회만 실행)
+        if: steps.keystore-cache.outputs.cache-hit != 'true'
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.1.1-bin.zip -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt/gradle
-          echo "/opt/gradle/gradle-8.1.1/bin" >> $GITHUB_PATH
+          keytool -genkeypair -v \
+            -keystore android/app/diary-key.jks \
+            -alias diary \
+            -keyalg RSA -keysize 2048 -validity 36500 \
+            -dname "CN=DiaryApp,O=Personal,C=KR" \
+            -storepass "DiaryApp2024!" \
+            -keypass  "DiaryApp2024!" \
+            -noprompt
+          echo "✅ 새 서명 키스토어 생성 완료 (캐시에 저장됩니다)"
 
       - name: Create local.properties
-        run: echo "sdk.dir=$HOME/android-sdk" > android/local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
       - name: Generate icons
         run: |
@@ -49,13 +58,19 @@ jobs:
             cp android/app/src/main/res/$dir/ic_launcher.png android/app/src/main/res/$dir/ic_launcher_round.png
           done
 
+      - name: Install Gradle 8.1.1
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.1.1-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/gradle
+          echo "/opt/gradle/gradle-8.1.1/bin" >> $GITHUB_PATH
+
       - name: Build APK
-        run: gradle assembleDebug
+        run: gradle assembleRelease
         working-directory: android
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: diary-app
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
